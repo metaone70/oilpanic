@@ -1,9 +1,0 @@
-usage for crunching 
-
-exomizer sfx sys program.prg
-
-exomizer sfx sys a-space-game-38.prg -x "lda $fb eor #$01 sta $fb beq skip lda $d020 eor #$01 sta $d020 skip:" -s "lda #$02 sta $d020"
-
-exomizer sfx $0820 pongy_v1.30.prg -x "lda $fb eor #$01 sta $fb beq skip inc $d020 skip:" -s "lda #$02 sta $d020" -o pongy_v1.30cr.prg
-
-exomizer sfx $0820 oilpanic_v1.24.prg -x "lda $fb eor #$01 sta $fb beq skip inc $d020 skip:" -s "lda #$02 sta $d020" -o oilpanic_v1.24_cr.prg
