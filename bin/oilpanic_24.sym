@@ -1,0 +1,200 @@
+.label player_drop_number=$16b1
+.label player_pointer=$16b0
+.label stop_music=$26fd {
+  .label clear_sid=$2701
+}
+.label update_bonus_mode=$134f {
+}
+.label last_hundred=$16c3
+.label math_temp=$169d
+.label change_game_type=$25ae
+.label wrapmessage=$26cd
+.label drop_spawn_timer=$16ab
+.label screenloc=$5f98
+.label key_to_char=$2656 {
+}
+.label sprite_top_4_r_pointer=$15e6
+.label check_speed_increase=$1333 {
+}
+.label text_intro_screen=$2489 {
+}
+.label points_to_add=$16b2
+.label font_library=$152b
+.label sprite_top_4_m_pointer=$15de
+.label sprite_bottom_5_pointer=$1600
+.label drop_left=$13e3 {
+}
+.label rk=$2602
+.label new_left_key_text=$2cbb
+.label fire_anim_timer=$16bb
+.label sprite_bottom_0_pointer=$15ee
+.label intro_screen=$2400 {
+}
+.label gent_spill_timer=$16c0
+.label sprite_top_2_pointer=$15b5
+.label pour_animation_timer=$16b7
+.label score_increment_timer=$16b5
+.label score_counter=$16b3
+.label lady_spill_active=$16bc
+.label update_pour_animation=$eed {
+}
+.label main_loop=$976 {
+}
+.label update_sfx=$139f {
+}
+.label sfx_active=$16cc
+.label update_lady_spill=$f5e {
+}
+.label check_for_bottom_score=$e78 {
+}
+.label split_screen=$951 {
+}
+.label gent_spill_active=$16bf
+.label game_mode=$16a1
+.label fire_frame=$16ba
+.label key_r=$25ef
+.label leading_zero_flag=$169e
+.label bonus_mode_timer=$16c5
+.label hold=$2484
+.label collector_pointer=$16a8
+.label key_l=$25c4
+.label rightkey=$16a0
+.label game_over=$10bc {
+}
+.label sprite_bottom_7_pointer=$1608
+.label sfx_type=$16cd
+.label display_high_score=$2708 {
+}
+.label key_done=$261a
+.label digit_ones=$1698
+.label update_collector=$cd8 {
+}
+.label intro_message=$272c
+.label oildrop_y_coord=$161d
+.label sprite_irq=$9a4 {
+  .label bottom_position=$a8c
+  .label irq_exit=$c6d
+}
+.label drop_mid=$1419 {
+}
+.label check_bonus_300=$1378 {
+}
+.label silence_all_channels=$151f {
+}
+.label GETIN=$ffe4
+.label sprite_top_0_pointer=$15af
+.label fire_timer=$16b9
+.label oil_bottom_score=$1621
+.label consecutive_score=$16c7
+.label start=$820 {
+}
+.label itext=$24cd
+.label sprite_bottom_2_pointer=$15f3
+.label oildrop_current_track=$16a5
+.label SCNKEY=$ff9f
+.label endscroll=$26fc
+.label pwm_counter=$16cf
+.label fire_active=$16b8
+.label miss_free_run=$16c9
+.label catch_sound=$1485 {
+}
+.label top_lives=$16a2
+.label add_score=$1214 {
+  .label get_t=$12a4
+  .label force_tens=$12a1
+  .label draw_h=$1289
+  .label get_font_idx=$12d1
+  .label check_tens=$1284
+  .label row_loop=$1273
+}
+.label sprite_bottom_1_pointer=$15ef
+.label sprite_top_3_pointer=$15ba
+.label player_position_temp=$16af
+.label player_bot_y_coord=$166f
+.label new_right_key_text=$2ce3
+.label sprite_idx=$169c
+.label check_for_catch=$e2f {
+}
+.label bucket_poured=$16b4
+.label collector_x_coord=$167c
+.label player_y_coord=$164c
+.label bonus_mode_active=$16c4
+.label cause_fire=$1020 {
+}
+.label update_oil_drops=$d50 {
+}
+.label scroll=$26c0
+.label gent_spill_frame=$16c1
+.label collector_table=$1676
+.label update_fire_animation=$f05 {
+}
+.label drop_fall_timer=$16ac
+.label oildrop_spawn_pattern=$160b
+.label new_key=$25c2
+.label textirq2=$26a3
+.label textirq1=$2686
+.label digit_huns=$169a
+.label new_keys_assigned=$2d0b
+.label pour_animation_active=$16b6
+.label update_gent_spill=$fbf {
+}
+.label oildrop_x_coord=$161a
+.label catch_timer=$16ad
+.label collector_speed_table_a=$1681
+.label collector_speed_table_b=$168b
+.label collector_edge_wait_table_a=$1686
+.label collector_edge_wait_table_b=$1690
+.label sprite_bottom_4_pointer=$15fe
+.label collector_y_coord=$1680
+.label drop_fall_speed_table_a=$1624
+.label drop_fall_speed_table_b=$162a
+.label info_text=$28d3
+.label player_x_coord=$1630
+.label player_bot_x_coord=$1668
+.label lk=$25d7
+.label MOVE_SPEED=$ff
+.label nowrap=$26ec
+.label row_temp=$169b
+.label miss_sound=$14bb {
+}
+.label main=$85b {
+}
+.label lady_spill_frame=$16be
+.label lady_spill_timer=$16bd
+.label kloop=$2594
+.label sprite_top_1_pointer=$15b1
+.label read=$26d8
+.label collector_timer=$16a9
+.label bottom_lives=$16a3
+.label oildrop_table_index=$16a4
+.label sprite_bottom_3_pointer=$15fa
+.label frame_done_flag=$16aa
+.label leftkey=$169f
+.label calculate_player_safe=$cab {
+}
+.label validate_key=$2628 {
+}
+.label update_score=$12e1 {
+}
+.label simple_delay=$1205 {
+}
+.label drop_speed_level=$16c2
+.label oildrop_current_step=$16a6
+.label player_position=$16ae
+.label drop_right=$144f {
+}
+.label high_score_bcd=$16ca
+.label smooth=$2
+.label digit_tens=$1699
+.label sprite_bottom_6_pointer=$1604
+.label read_input=$c70 {
+  .label moveleft=$c8f
+  .label moveright=$c9d
+}
+.label sprite_top_4_l_pointer=$15d6
+.label score_update_flag=$1695
+.label oildrop_active=$16a7
+.label sfx_counter=$16ce
+.label cause_spill=$1060 {
+}
+.label score_bcd=$1696

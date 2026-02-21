@@ -1,0 +1,2534 @@
+******************************* Segment: Default *******************************
+[Basic]
+0801: 0b 08     -         
+0803: 0a 00     -         
+0805: 9e        -         
+0806: 32 30 38 30                                      -         
+080a: 00        -         
+080b: 00 00     - upstartEnd:
+
+[Main Program]
+0820: 78        - start:  sei
+0821: a9 36     -         lda #$36		    	// disable BASIC ROM, all memory but $e000-$ffff  
+0823: 85 01     -         sta $01 		    	// is available (%0011 0110)
+0825: a9 2f     -         lda #$2f 		    	// when hit runstop/restore
+0827: 8d 18 03  -         sta $0318 		    	// it points to the  
+082a: a9 08     -         lda #$08    			// start section
+082c: 8d 19 03  -         sta $0319	
+082f: a9 00     -         lda #color
+0831: 8d 20 d0  -         sta $d020
+0834: a9 00     -         lda #color
+0836: 8d 21 d0  -         sta $d021
+0839: ad 00 dd  -         lda VIC_BANK_POINTER		// bit 0-1=%10 VIC bank #1 ($4000-$7fff)
+083c: 29 fc     -         and #%11111100				// $dd00
+083e: 09 02     -         ora #%00000010
+0840: 8d 00 dd  -         sta VIC_BANK_POINTER   
+0843: a9 70     -         lda #%01110000      	   	// bit1-3 = %000 VIC+$0000 ($4000) character memory
+0845: 8d 18 d0  -         sta GRAPHICS_POINTER  		// bit4-7 = %0111 VIC+$1C00 ($5C00) screen memory
+0848: ad ca 16  -         lda high_score_bcd           // Check if already initialized
+084b: 0d cb 16  -         ora high_score_bcd+1
+084e: d0 08     -         bne !skip_init+              // If not zero, skip initialization
+0850: a9 00     -         lda #$00                     // Set to 000 initially
+0852: 8d ca 16  -         sta high_score_bcd
+0855: 8d cb 16  -         sta high_score_bcd+1
+0858: 20 00 24  -         jsr intro_screen
+085b: 78        - main:   sei		
+085c: a9 3b     -         lda #%00111011        		// bit 3=1 25 rows, bit 4=1 screen on
+085e: 8d 11 d0  -         sta SCREEN_CONTROL_REG 		// bit 5=1 bitmap on ($d011)
+0861: a9 18     -         lda #%00011000 				// bit 3=1 40 cols, bit4 =1 multicolor on
+0863: 8d 16 d0  -         sta SCREEN_MULTICOLOUR		// $d016
+0866: ad 00 dd  -         lda VIC_BANK_POINTER		// bit 0-1=%10 VIC bank #1 ($4000-$7fff)
+0869: 29 fc     -         and #%11111100				// $dd00
+086b: 09 02     -         ora #%00000010
+086d: 8d 00 dd  -         sta VIC_BANK_POINTER   
+0870: a9 78     -         lda #%01111000      	   	// bit1-3 = %100 VIC+$2000 ($6000) character memory
+0872: 8d 18 d0  -         sta GRAPHICS_POINTER  		// bit4-7 = %0111 VIC+$1C00 ($5C00) screen memory
+0875: a2 00     -         ldx #$00
+0877: bd 40 7f  -         lda scrData,x
+087a: 9d 00 5c  -         sta scrRam,x
+087d: bd 40 80  -         lda scrData+$100,x
+0880: 9d 00 5d  -         sta scrRam+$100,x
+0883: bd 40 81  -         lda scrData+$200,x
+0886: 9d 00 5e  -         sta scrRam+$200,x       
+0889: bd 28 82  -         lda scrData+$2e8,x
+088c: 9d e8 5e  -         sta scrRam+$2e8,x
+088f: bd 28 83  -         lda colData,x
+0892: 9d 00 d8  -         sta colRam,x
+0895: bd 28 84  -         lda colData+$100,x
+0898: 9d 00 d9  -         sta colRam+$100,x
+089b: bd 28 85  -         lda colData+$200,x
+089e: 9d 00 da  -         sta colRam+$200,x
+08a1: bd 10 86  -         lda colData+$2e8,x
+08a4: 9d e8 da  -         sta colRam+$2e8,x
+08a7: e8        -         inx
+08a8: d0 cd     -         bne !loop-
+08aa: ad 10 87  -         lda backGroundColor
+08ad: 8d 21 d0  -         sta $d021
+08b0: a9 0f     -         lda #color
+08b2: 8d 20 d0  -         sta $d020
+08b5: a9 0f     -         lda #color
+08b7: 8d 21 d0  -         sta $d021
+08ba: a9 00     -         lda #$00
+08bc: 8d 1b d0  -         sta SPRITE_PRIORITY			// all sprites are drawn in front of the screen
+08bf: 8d 1c d0  -         sta SPRITE_COLOR_DEPTH		// all sprites are single color
+08c2: a2 00     -         ldx #$00					// and they are all black
+08c4: a9 00     -         lda #$00		
+08c6: 9d 27 d0  -         sta $d027,x
+08c9: e8        -         inx
+08ca: e0 08     -         cpx #$08
+08cc: d0 f6     -         bne !-
+08ce: a9 00     -         lda #$00					// pointer for the collector movement table
+08d0: 8d a8 16  -         sta collector_pointer		// of the bottom screen
+08d3: a9 00     -         lda #$00					// set the lives to 0
+08d5: 8d a2 16  -         sta top_lives				// missed lives increment
+08d8: 8d a3 16  -         sta bottom_lives
+08db: a9 03     -         lda #$03
+08dd: 8d b0 16  -         sta player_pointer
+08e0: a9 00     -         lda #$00
+08e2: 8d 96 16  -         sta score_bcd               // Reset score to 0
+08e5: 8d 97 16  -         sta score_bcd+1
+08e8: 8d c7 16  -         sta consecutive_score       // Reset consecutive score
+08eb: 8d c8 16  -         sta consecutive_score+1
+08ee: 8d c3 16  -         sta last_hundred            // Reset hundred tracker
+08f1: 8d a2 16  -         sta top_lives               // Reset lives
+08f4: 8d a3 16  -         sta bottom_lives
+08f7: 8d a8 16  -         sta collector_pointer
+08fa: 8d a7 16  -         sta oildrop_active
+08fd: 8d b8 16  -         sta fire_active
+0900: 8d bc 16  -         sta lady_spill_active
+0903: 8d bf 16  -         sta gent_spill_active
+0906: 8d c4 16  -         sta bonus_mode_active
+0909: 8d c5 16  -         sta bonus_mode_timer
+090c: 8d c6 16  -         sta bonus_mode_timer+1
+090f: 8d c2 16  -         sta drop_speed_level
+0912: 8d b5 16  -         sta score_increment_timer
+0915: a9 01     -         lda #$01
+0917: 8d c9 16  -         sta miss_free_run       	// Start with miss-free status
+091a: a9 03     -         lda #$03
+091c: 8d b0 16  -         sta player_pointer
+091f: 8d ae 16  -         sta player_position         // Center player
+0922: a9 00     -         lda #$00
+0924: 8d b1 16  -         sta player_drop_number      // Empty bucket
+0927: a9 00     -         lda #$00					// Update score display to show 0
+0929: 8d b2 16  -         sta points_to_add
+092c: 20 14 12  -         jsr add_score               // Display initial score of 0
+092f: ad 04 dc  -         lda CIA_TIME_A_LO           // CIA Timer A low byte (changes rapidly)
+0932: 4d 05 dc  -         eor CIA_TIME_A_HI          
+0935: 29 0f     -         and #$0f               	    
+0937: c9 0f     -         cmp #$0f                   
+0939: 90 02     -         bcc !ok+                    
+093b: a9 00     -         lda #$00                    
+093d: 8d a4 16  -         sta oildrop_table_index 	// Set random starting point (0-8)
+0940: a9 00     -         lda #$00					// Initialize SID chip
+0942: a2 00     -         ldx #$00
+0944: 9d 00 d4  -         sta $d400,x
+0947: e8        -         inx
+0948: e0 18     -         cpx #$18
+094a: d0 f8     -         bne !-
+094c: a9 0f     -         lda #$0f					// Set volume to maximum
+094e: 8d 18 d4  -         sta $d418
+0951: a9 7f     - split_screen:lda #$7f					// disable CIA interrupts
+0953: 8d 0d dc  -         sta $dc0d
+0956: 8d 0d dd  -         sta $dd0d
+0959: a9 01     -         lda #$01					// enable raster interrupts
+095b: 8d 1a d0  -         sta $d01a
+095e: a9 20     -         lda #$20					// Trigger at raster line 50
+0960: 8d 12 d0  -         sta RASTER_LINE
+0963: ad 11 d0  -         lda RASTER_LINE_MSB			// Clear bit 7 of $d011 (for raster lines < 256)
+0966: 29 7f     -         and #$7f
+0968: 8d 11 d0  -         sta RASTER_LINE_MSB
+096b: a9 a4     -         lda #<sprite_irq
+096d: 8d 14 03  -         sta $0314
+0970: a9 09     -         lda #>sprite_irq
+0972: 8d 15 03  -         sta $0315
+0975: 58        -         cli							// Re-enable interrupts
+0976: ad aa 16  - main_loop:lda frame_done_flag			// ensure sysynchronization between main loop and raster interrupt 
+0979: f0 fb     -         beq main_loop				
+097b: a9 00     -         lda #$00
+097d: 8d aa 16  -         sta frame_done_flag
+0980: 20 70 0c  -         jsr read_input
+0983: 20 d8 0c  -         jsr update_collector
+0986: 20 50 0d  -         jsr update_oil_drops
+0989: 20 78 0e  -         jsr check_for_bottom_score
+098c: 20 ed 0e  -         jsr update_pour_animation 
+098f: 20 05 0f  -         jsr update_fire_animation
+0992: 20 5e 0f  -         jsr update_lady_spill
+0995: 20 bf 0f  -         jsr update_gent_spill
+0998: 20 e1 12  -         jsr update_score
+099b: 20 4f 13  -         jsr update_bonus_mode
+099e: 20 9f 13  -         jsr update_sfx 
+09a1: 4c 76 09  -         jmp main_loop
+09a4: 0e 19 d0  - sprite_irq:asl INTERRUPT_STATUS		// acknowledge the interrupt
+09a7: ad 12 d0  -         lda RASTER_LINE
+09aa: c9 96     -         cmp #$96
+09ac: d0 03     -         bne!+
+09ae: 4c 8c 0a  -         jmp bottom_position
+09b1: a9 08     -         lda #%00001000				// sprites  3 & 4 are double height
+09b3: 8d 17 d0  -         sta $d017
+09b6: a9 08     -         lda #%00001000				// sprites 3 & 4 are double width
+09b8: 8d 1d d0  -         sta $d01d
+09bb: a9 1f     -         lda #%00011111
+09bd: 8d 15 d0  -         sta SPRITE_ENABLE
+09c0: ad a1 16  -         lda game_mode				// check the game mode
+09c3: d0 12     -         bne !b_mode+
+09c5: a9 61     -         lda #$61
+09c7: 8d 00 d0  -         sta $d000
+09ca: a9 3e     -         lda #$3e
+09cc: 8d 01 d0  -         sta $d001
+09cf: a9 61     -         lda #$61
+09d1: 8d f8 5f  -         sta Sprite_Pointer
+09d4: 4c e6 09  -         jmp !+
+09d7: a9 ef     -         lda #$ef
+09d9: 8d 00 d0  -         sta $d000
+09dc: a9 3e     -         lda #$3e
+09de: 8d 01 d0  -         sta $d001
+09e1: a9 62     -         lda #$62
+09e3: 8d f8 5f  -         sta Sprite_Pointer
+09e6: ae a2 16  -         ldx top_lives					// check the top lives (incrementing)
+09e9: bd b1 15  -         lda sprite_top_1_pointer,x		// and add the missed lives to the pointer
+09ec: 8d f9 5f  -         sta Sprite_Pointer+1			// of the miss sprite
+09ef: a9 ef     -         lda #$ef
+09f1: 8d 02 d0  -         sta $d002
+09f4: a9 4e     -         lda #$4e
+09f6: 8d 03 d0  -         sta $d003
+09f9: ad a7 16  -         lda oildrop_active
+09fc: f0 1b     -         beq !no_drop+
+09fe: ae a6 16  -         ldx oildrop_current_step
+0a01: bd b5 15  -         lda sprite_top_2_pointer,x
+0a04: 8d fa 5f  -         sta Sprite_Pointer+2
+0a07: bd 1d 16  -         lda oildrop_y_coord,x 
+0a0a: 8d 05 d0  -         sta $d005
+0a0d: ae a5 16  -         ldx oildrop_current_track
+0a10: bd 1a 16  -         lda oildrop_x_coord,x 
+0a13: 8d 04 d0  -         sta $d004
+0a16: 4c 1e 0a  -         jmp !player_logic+
+0a19: a9 64     -         lda #$64
+0a1b: 8d fa 5f  -         sta Sprite_Pointer+2
+0a1e: ae b0 16  -         ldx player_pointer
+0a21: bd ba 15  -         lda sprite_top_3_pointer,x
+0a24: 8d fb 5f  -         sta Sprite_Pointer+3
+0a27: bd 30 16  -         lda player_x_coord,x
+0a2a: 8d 06 d0  -         sta $d006
+0a2d: bd 4c 16  -         lda player_y_coord,x 
+0a30: 8d 07 d0  -         sta $d007
+0a33: ad b8 16  -         lda fire_active					// check if there is fire (for sprite 4)
+0a36: f0 47     -         beq !no_fire+
+0a38: ae ba 16  -         ldx fire_frame                  // get animation frame (0-7)
+0a3b: ad b8 16  -         lda fire_active
+0a3e: c9 01     -         cmp #$01
+0a40: f0 17     -         beq !fire_left+
+0a42: c9 02     -         cmp #$02
+0a44: f0 26     -         beq !fire_mid+		
+0a46: bd e6 15  -         lda sprite_top_4_r_pointer,x
+0a49: 8d fc 5f  -         sta Sprite_Pointer+4
+0a4c: a9 cc     -         lda #$cc                       // X coord for right fire
+0a4e: 8d 08 d0  -         sta $d008
+0a51: a9 79     -         lda #$79
+0a53: 8d 09 d0  -         sta $d009
+0a56: 4c 84 0a  -         jmp !skip+
+0a59: bd d6 15  -         lda sprite_top_4_l_pointer,x
+0a5c: 8d fc 5f  -         sta Sprite_Pointer+4
+0a5f: a9 70     -         lda #$70                      // X coord for left fire
+0a61: 8d 08 d0  -         sta $d008
+0a64: a9 77     -         lda #$77
+0a66: 8d 09 d0  -         sta $d009
+0a69: 4c 84 0a  -         jmp !skip+
+0a6c: bd de 15  -         lda sprite_top_4_m_pointer,x
+0a6f: 8d fc 5f  -         sta Sprite_Pointer+4
+0a72: a9 9a     -         lda #$9a                        // X coord for middle fire
+0a74: 8d 08 d0  -         sta $d008
+0a77: a9 77     -         lda #$77
+0a79: 8d 09 d0  -         sta $d009
+0a7c: 4c 84 0a  -         jmp !skip+
+0a7f: a9 64     -         lda #$64					// no fire, so empty sprite for sprite 4
+0a81: 8d fc 5f  -         sta Sprite_Pointer+4
+0a84: a9 96     -         lda #$96
+0a86: 8d 12 d0  -         sta RASTER_LINE
+0a89: 4c 6d 0c  -         jmp irq_exit
+0a8c: a9 00     - bottom_position:lda #%00000000					// no sprite is double width or height
+0a8e: 8d 17 d0  -         sta $d017						// on bottom screen
+0a91: 8d 1d d0  -         sta $d01d
+0a94: a9 ff     -         lda #%11111111					// enable all sprites
+0a96: 8d 15 d0  -         sta SPRITE_ENABLE
+0a99: a9 64     -         lda #$64						
+0a9b: 8d fc 5f  -         sta Sprite_Pointer+4
+0a9e: 8d ff 5f  -         sta Sprite_Pointer+7
+0aa1: a9 80     -         lda #$80						// sprite 0 x and y coordinates
+0aa3: 8d 00 d0  -         sta $d000
+0aa6: a9 9d     -         lda #$9d
+0aa8: 8d 01 d0  -         sta $d001
+0aab: a9 30     -         lda #$30						// sprite pointer for the score
+0aad: 8d f8 5f  -         sta Sprite_Pointer	
+0ab0: ae a3 16  -         ldx bottom_lives				// check the bottom lives (incrementing)
+0ab3: bd ef 15  -         lda sprite_bottom_1_pointer,x	// and add the missed lives to the pointer
+0ab6: 8d f9 5f  -         sta Sprite_Pointer+1			// of the miss sprite
+0ab9: a9 ef     -         lda #$ef
+0abb: 8d 02 d0  -         sta $d002
+0abe: a9 a0     -         lda #$a0
+0ac0: 8d 03 d0  -         sta $d003
+0ac3: ae ae 16  -         ldx player_position
+0ac6: bd f3 15  -         lda sprite_bottom_2_pointer,x
+0ac9: 8d fa 5f  -         sta Sprite_Pointer+2
+0acc: bd 68 16  -         lda player_bot_x_coord,x
+0acf: 8d 04 d0  -         sta $d004
+0ad2: bd 6f 16  -         lda player_bot_y_coord,x
+0ad5: 8d 05 d0  -         sta $d005
+0ad8: ad c4 16  -         lda bonus_mode_active
+0adb: f0 13     -         beq !normal_collector+
+0add: ad fa 15  -         lda sprite_bottom_3_pointer
+0ae0: 8d fb 5f  -         sta Sprite_Pointer+3
+0ae3: a9 83     -         lda #$83
+0ae5: 8d 06 d0  -         sta $d006
+0ae8: a9 c5     -         lda #$c5
+0aea: 8d 07 d0  -         sta $d007
+0aed: 4c 09 0b  -         jmp !collector_done+
+0af0: ae a8 16  -         ldx collector_pointer
+0af3: bd 76 16  -         lda collector_table,x
+0af6: a8        -         tay
+0af7: b9 fa 15  -         lda sprite_bottom_3_pointer,y
+0afa: 8d fb 5f  -         sta Sprite_Pointer+3
+0afd: b9 7c 16  -         lda collector_x_coord,y
+0b00: 8d 06 d0  -         sta $d006
+0b03: ad 80 16  -         lda collector_y_coord
+0b06: 8d 07 d0  -         sta $d007
+0b09: ad c4 16  -         lda bonus_mode_active
+0b0c: f0 13     -         beq !check_spill+
+0b0e: ad fd 15  -         lda sprite_bottom_3_pointer+3
+0b11: 8d fc 5f  -         sta Sprite_Pointer+4
+0b14: a9 cd     -         lda #$cd
+0b16: 8d 08 d0  -         sta $d008
+0b19: a9 c5     -         lda #$c5
+0b1b: 8d 09 d0  -         sta $d009
+0b1e: 4c 85 0b  -         jmp !spill4_done+
+0b21: ad bc 16  -         lda lady_spill_active
+0b24: d0 08     -         bne !lady_oil+
+0b26: ad bf 16  -         lda gent_spill_active
+0b29: d0 1a     -         bne !gent_oil+
+0b2b: 4c 80 0b  -         jmp !no_spill4+
+0b2e: ad be 16  -         lda lady_spill_frame
+0b31: f0 29     -         beq !oil_air_right+
+0b33: a9 5f     -         lda #$5f
+0b35: 8d fc 5f  -         sta Sprite_Pointer+4
+0b38: a9 dd     -         lda #$dd
+0b3a: 8d 08 d0  -         sta $d008
+0b3d: a9 e3     -         lda #$e3
+0b3f: 8d 09 d0  -         sta $d009
+0b42: 4c 85 0b  -         jmp !spill4_done+
+0b45: ad c1 16  -         lda gent_spill_frame
+0b48: f0 24     -         beq !oil_air_left+
+0b4a: a9 5f     -         lda #$5f
+0b4c: 8d fc 5f  -         sta Sprite_Pointer+4
+0b4f: a9 78     -         lda #$78
+0b51: 8d 08 d0  -         sta $d008
+0b54: a9 e3     -         lda #$e3
+0b56: 8d 09 d0  -         sta $d009
+0b59: 4c 85 0b  -         jmp !spill4_done+
+0b5c: a9 5e     -         lda #$5e
+0b5e: 8d fc 5f  -         sta Sprite_Pointer+4
+0b61: a9 dd     -         lda #$dd
+0b63: 8d 08 d0  -         sta $d008
+0b66: a9 d5     -         lda #$d5
+0b68: 8d 09 d0  -         sta $d009
+0b6b: 4c 85 0b  -         jmp !spill4_done+
+0b6e: a9 5e     -         lda #$5e
+0b70: 8d fc 5f  -         sta Sprite_Pointer+4
+0b73: a9 78     -         lda #$78
+0b75: 8d 08 d0  -         sta $d008
+0b78: a9 d5     -         lda #$d5
+0b7a: 8d 09 d0  -         sta $d009
+0b7d: 4c 85 0b  -         jmp !spill4_done+
+0b80: a9 64     -         lda #$64
+0b82: 8d fc 5f  -         sta Sprite_Pointer+4
+0b85: ad bc 16  -         lda lady_spill_active
+0b88: f0 2f     -         beq !lady_normal+
+0b8a: ad be 16  -         lda lady_spill_frame
+0b8d: c9 02     -         cmp #$02
+0b8f: 90 28     -         bcc !lady_normal+           // frames 0-1 = show lady in normal position
+0b91: c9 03     -         cmp #$03					// frames 2-4 = lady jumping on right
+0b93: f0 12     -         beq !lady_jump+             // frame 3 = jumping
+0b95: a9 59     -         lda #$59					// frames 2 & 4 = standing angry
+0b97: 8d fd 5f  -         sta Sprite_Pointer+5
+0b9a: a9 ea     -         lda #$ea
+0b9c: 8d 0a d0  -         sta $d00a
+0b9f: a9 df     -         lda #$df
+0ba1: 8d 0b d0  -         sta $d00b
+0ba4: 4c c9 0b  -         jmp !lady_done+
+0ba7: a9 5a     -         lda #$5a
+0ba9: 8d fd 5f  -         sta Sprite_Pointer+5
+0bac: a9 ea     -         lda #$ea
+0bae: 8d 0a d0  -         sta $d00a
+0bb1: a9 d0     -         lda #$d0                    // higher Y position
+0bb3: 8d 0b d0  -         sta $d00b
+0bb6: 4c c9 0b  -         jmp !lady_done+
+0bb9: ad 00 16  -         lda sprite_bottom_5_pointer
+0bbc: 8d fd 5f  -         sta Sprite_Pointer+5
+0bbf: a9 dd     -         lda #$dd
+0bc1: 8d 0a d0  -         sta $d00a
+0bc4: a9 df     -         lda #$df
+0bc6: 8d 0b d0  -         sta $d00b
+0bc9: ad bf 16  -         lda gent_spill_active
+0bcc: f0 2f     -         beq !gent_normal+
+0bce: ad c1 16  -         lda gent_spill_frame
+0bd1: c9 02     -         cmp #$02
+0bd3: 90 28     -         bcc !gent_normal+           // frames 0-1 = show in normal position
+0bd5: c9 03     -         cmp #$03
+0bd7: f0 12     -         beq !gent_hands+            // frame 3 = hands moving
+0bd9: a9 5c     -         lda #$5c
+0bdb: 8d fe 5f  -         sta Sprite_Pointer+6
+0bde: a9 68     -         lda #$68                    // X position left side
+0be0: 8d 0c d0  -         sta $d00c
+0be3: a9 df     -         lda #$df
+0be5: 8d 0d d0  -         sta $d00d
+0be8: 4c 0d 0c  -         jmp !gent_done+
+0beb: a9 5d     -         lda #$5d                    // hands up sprite
+0bed: 8d fe 5f  -         sta Sprite_Pointer+6
+0bf0: a9 68     -         lda #$68
+0bf2: 8d 0c d0  -         sta $d00c
+0bf5: a9 df     -         lda #$df
+0bf7: 8d 0d d0  -         sta $d00d
+0bfa: 4c 0d 0c  -         jmp !gent_done+
+0bfd: ad 04 16  -         lda sprite_bottom_6_pointer
+0c00: 8d fe 5f  -         sta Sprite_Pointer+6
+0c03: a9 78     -         lda #$78
+0c05: 8d 0c d0  -         sta $d00c
+0c08: a9 df     -         lda #$df
+0c0a: 8d 0d d0  -         sta $d00d
+0c0d: ad b6 16  -         lda pour_animation_active
+0c10: d0 21     -         bne !pour_anim+
+0c12: ad bf 16  -         lda gent_spill_active
+0c15: d0 03     -         bne !gent_puff+
+0c17: 4c 5e 0c  -         jmp !no_sprite7+
+0c1a: ad c1 16  -         lda gent_spill_frame
+0c1d: c9 02     -         cmp #$02
+0c1f: 90 3d     -         bcc !no_sprite7+            // frames 0-1 = no puff yet
+0c21: a9 60     -         lda #$60
+0c23: 8d ff 5f  -         sta Sprite_Pointer+7
+0c26: a9 60     -         lda #$60                    // X coord
+0c28: 8d 0e d0  -         sta $d00e
+0c2b: a9 d5     -         lda #$d5                    // Y coord
+0c2d: 8d 0f d0  -         sta $d00f
+0c30: 4c 63 0c  -         jmp !pour_done+
+0c33: ad b6 16  -         lda pour_animation_active
+0c36: c9 01     -         cmp #$01
+0c38: f0 12     -         beq !pour_left+
+0c3a: a9 66     -         lda #$66
+0c3c: 8d ff 5f  -         sta Sprite_Pointer+7
+0c3f: a9 d2     -         lda #$d2
+0c41: 8d 0e d0  -         sta $d00e
+0c44: a9 bc     -         lda #$bc
+0c46: 8d 0f d0  -         sta $d00f
+0c49: 4c 63 0c  -         jmp !pour_done+
+0c4c: a9 65     -         lda #$65
+0c4e: 8d ff 5f  -         sta Sprite_Pointer+7
+0c51: a9 7f     -         lda #$7f
+0c53: 8d 0e d0  -         sta $d00e
+0c56: a9 bc     -         lda #$bc
+0c58: 8d 0f d0  -         sta $d00f
+0c5b: 4c 63 0c  -         jmp !pour_done+
+0c5e: a9 64     -         lda #$64
+0c60: 8d ff 5f  -         sta Sprite_Pointer+7
+0c63: a9 20     -         lda #$20
+0c65: 8d 12 d0  -         sta RASTER_LINE
+0c68: a9 01     -         lda #$01
+0c6a: 8d aa 16  -         sta frame_done_flag
+0c6d: 4c 31 ea  - irq_exit:jmp $ea31
+0c70: ad b8 16  - read_input:lda fire_active					// if there is fire on the upper part
+0c73: d0 35     -         bne !done+						// don't let the player move
+0c75: ad bc 16  -         lda lady_spill_active       	// if oil is spilling over lady
+0c78: d0 30     -         bne !done+						// don't let the player move
+0c7a: ad bf 16  -         lda gent_spill_active       	// if oil is spilling over gent
+0c7d: d0 2b     -         bne !done+						// don't let the player move
+0c7f: 20 e4 ff  -         jsr GETIN
+0c82: cd 9f 16  -         cmp leftkey 
+0c85: f0 08     -         beq moveleft
+0c87: cd a0 16  -         cmp rightkey 
+0c8a: f0 11     -         beq moveright
+0c8c: 4c aa 0c  -         jmp !done+
+0c8f: ad ae 16  - moveleft:lda player_position
+0c92: f0 16     -         beq !done+
+0c94: ce ae 16  -         dec player_position
+0c97: 20 ab 0c  -         jsr calculate_player_safe
+0c9a: 4c aa 0c  -         jmp !done+
+0c9d: ad ae 16  - moveright:lda player_position
+0ca0: c9 06     -         cmp #$06
+0ca2: f0 06     -         beq !done+
+0ca4: ee ae 16  -         inc player_position
+0ca7: 20 ab 0c  -         jsr calculate_player_safe
+0caa: 60        -         rts
+0cab: 08        - calculate_player_safe:php
+0cac: 78        -         sei
+0cad: ad b1 16  -         lda player_drop_number
+0cb0: c9 03     -         cmp #$03
+0cb2: 90 02     -         bcc !+
+0cb4: a9 03     -         lda #$03                    // Clamp drops at 3
+0cb6: 8d 9d 16  -         sta math_temp
+0cb9: ad ae 16  -         lda player_position
+0cbc: c9 07     -         cmp #$07                    // Is position > 6?
+0cbe: 90 02     -         bcc !+
+0cc0: a9 06     -         lda #$06                    // Clamp position at 6
+0cc2: 8d af 16  -         sta player_position_temp    // Store temporarily
+0cc5: ad 9d 16  -         lda math_temp               // Get clamped drops
+0cc8: 0a        -         asl; asl; asl               // x8
+0cc9: 0a        -         asl; asl               // x8
+0cca: 0a        -         asl               // x8
+0ccb: 38        -         sec
+0ccc: ed 9d 16  -         sbc math_temp               // x7
+0ccf: 18        -         clc
+0cd0: 6d af 16  -         adc player_position_temp    // + position
+0cd3: 8d b0 16  -         sta player_pointer
+0cd6: 28        -         plp
+0cd7: 60        -         rts
+0cd8: ad b8 16  - update_collector:lda fire_active					// stop collector if there is any fire
+0cdb: d0 72     -         bne !skip+
+0cdd: ad bc 16  -         lda lady_spill_active			// stop collector if there is lady spill
+0ce0: d0 6d     -         bne !skip+
+0ce2: ad bf 16  -         lda gent_spill_active			// stop collector if there is gent spill
+0ce5: d0 68     -         bne !skip+	
+0ce7: ad 95 16  -         lda score_update_flag			// stop collector if score is updating
+0cea: d0 63     -         bne !skip+
+0cec: ad b1 16  -         lda player_drop_number			// freeze collector if player has a full bucket
+0cef: c9 03     -         cmp #$03						// and also at the edges
+0cf1: d0 09     -         bne !not_full+
+0cf3: ad ae 16  -         lda player_position				// and also 
+0cf6: f0 57     -         beq !skip+          			// position 0 = left edge, freeze
+0cf8: c9 06     -         cmp #$06
+0cfa: f0 53     -         beq !skip+          			// position 6 = right edge, freeze
+0cfc: ee a9 16  -         inc collector_timer
+0cff: ad a8 16  -         lda collector_pointer			// check if the collector is on the edges (waits a little bit longer)
+0d02: f0 1f     -         beq !edge_wait+
+0d04: c9 03     -         cmp #$03
+0d06: f0 1b     -         beq !edge_wait+
+0d08: ae c2 16  -         ldx drop_speed_level			// get the current speed level
+0d0b: ad a9 16  -         lda collector_timer
+0d0e: ac a1 16  -         ldy game_mode
+0d11: d0 08     -         bne !speed_b+
+0d13: dd 81 16  -         cmp collector_speed_table_a,x	// check with the game A collector speed table
+0d16: d0 37     -         bne !skip+
+0d18: 4c 3b 0d  -         jmp !move+
+0d1b: dd 8b 16  -         cmp collector_speed_table_b,x	// check with the game B collector speed table
+0d1e: d0 2f     -         bne !skip+
+0d20: 4c 3b 0d  -         jmp !move+
+0d23: ad a9 16  -         lda collector_timer
+0d26: ae c2 16  -         ldx drop_speed_level
+0d29: ac a1 16  -         ldy game_mode
+0d2c: d0 08     -         bne !edge_b+
+0d2e: dd 86 16  -         cmp collector_edge_wait_table_a,x	// check with the game A collector edge table
+0d31: d0 1c     -         bne !skip+
+0d33: 4c 3b 0d  -         jmp !move+
+0d36: dd 90 16  -         cmp collector_edge_wait_table_b,x	// check with the game B collector edge table
+0d39: d0 14     -         bne !skip+
+0d3b: a9 00     -         lda #$00
+0d3d: 8d a9 16  -         sta collector_timer
+0d40: ee a8 16  -         inc collector_pointer
+0d43: ad a8 16  -         lda collector_pointer
+0d46: c9 06     -         cmp #$06
+0d48: d0 05     -         bne!skip+
+0d4a: a9 00     -         lda #$00
+0d4c: 8d a8 16  -         sta collector_pointer
+0d4f: 60        -         rts
+0d50: ad b6 16  - update_oil_drops:lda pour_animation_active
+0d53: d0 66     -         bne !skip_to_end+
+0d55: ad a7 16  -         lda oildrop_active
+0d58: d0 64     -         bne !update+
+0d5a: ad b8 16  -         lda fire_active					// if there is fire, don't spawn
+0d5d: d0 5c     -         bne !skip_to_end+
+0d5f: ad bc 16  -         lda lady_spill_active       	// if there is oil over lady, don't spawn
+0d62: d0 57     -         bne !skip_to_end+
+0d64: ad bf 16  -         lda gent_spill_active      	 	// if there is oil over gent, don't spawn
+0d67: d0 52     -         bne !skip_to_end+
+0d69: ad ab 16  -         lda drop_spawn_timer
+0d6c: f0 06     -         beq !do_spawn+
+0d6e: ce ab 16  -         dec drop_spawn_timer
+0d71: 4c bb 0d  -         jmp !skip_to_end+
+0d74: a9 00     -         lda #$00
+0d76: 8d ab 16  -         sta drop_spawn_timer
+0d79: ae a4 16  -         ldx oildrop_table_index			// get the spawn point from the table
+0d7c: bd 0b 16  -         lda oildrop_spawn_pattern,x
+0d7f: 8d a5 16  -         sta oildrop_current_track		// and put it on the track
+0d82: ad a5 16  -         lda oildrop_current_track
+0d85: c9 01     -         cmp #$01
+0d87: f0 09     -         beq !play_mid+
+0d89: c9 00     -         cmp #$00
+0d8b: f0 0a     -         beq !play_left+
+0d8d: a9 02     -         lda #$02
+0d8f: 4c 99 0d  -         jmp !set_sound+
+0d92: a9 01     -         lda #$01
+0d94: 4c 99 0d  -         jmp !set_sound+
+0d97: a9 00     -         lda #$00
+0d99: 8d cd 16  -         sta sfx_type
+0d9c: a9 01     -         lda #$01
+0d9e: 8d cc 16  -         sta sfx_active
+0da1: a9 00     -         lda #$00
+0da3: 8d ce 16  -         sta sfx_counter
+0da6: e8        -         inx
+0da7: e0 0f     -         cpx #$0f						// if we reached 15, reset the table index
+0da9: d0 02     -         bne !+
+0dab: a2 00     -         ldx #$00
+0dad: 8e a4 16  -         stx oildrop_table_index
+0db0: a9 00     -         lda #$00
+0db2: 8d a6 16  -         sta oildrop_current_step
+0db5: ee a7 16  -         inc oildrop_active
+0db8: 4c 2e 0e  -         jmp !end_drop+
+0dbb: 4c 2e 0e  -         jmp !end_drop+
+0dbe: ad a6 16  -         lda oildrop_current_step		// check if the drop is at the bottom
+0dc1: c9 03     -         cmp #$03
+0dc3: f0 4b     -         beq !at_bottom+					// if yes, go to bottom routine
+0dc5: ee ac 16  -         inc drop_fall_timer
+0dc8: ad ac 16  -         lda drop_fall_timer
+0dcb: ae c2 16  -         ldx drop_speed_level
+0dce: ac a1 16  -         ldy game_mode
+0dd1: d0 06     -         bne !speed_b+
+0dd3: bd 24 16  -         lda drop_fall_speed_table_a,x
+0dd6: 4c dc 0d  -         jmp !check_speed+
+0dd9: bd 2a 16  -         lda drop_fall_speed_table_b,x
+0ddc: cd ac 16  -         cmp drop_fall_timer
+0ddf: d0 4d     -         bne !end_drop+              // not time to fall yet
+0de1: a9 00     -         lda #$00
+0de3: 8d ac 16  -         sta drop_fall_timer
+0de6: ee a6 16  -         inc oildrop_current_step
+0de9: ad a5 16  -         lda oildrop_current_track
+0dec: c9 01     -         cmp #$01
+0dee: f0 09     -         beq !play_mid_fall+
+0df0: c9 00     -         cmp #$00
+0df2: f0 0a     -         beq !play_left_fall+
+0df4: a9 02     -         lda #$02
+0df6: 4c 00 0e  -         jmp !set_sound_fall+
+0df9: a9 01     -         lda #$01
+0dfb: 4c 00 0e  -         jmp !set_sound_fall+
+0dfe: a9 00     -         lda #$00
+0e00: 8d cd 16  -         sta sfx_type
+0e03: a9 01     -         lda #$01
+0e05: 8d cc 16  -         sta sfx_active
+0e08: a9 00     -         lda #$00
+0e0a: 8d ce 16  -         sta sfx_counter
+0e0d: 4c 2e 0e  -         jmp !end_drop+
+0e10: ee ad 16  -         inc catch_timer
+0e13: ad ad 16  -         lda catch_timer
+0e16: ae a1 16  -         ldx game_mode
+0e19: d0 07     -         bne !catch_b+
+0e1b: c9 11     -         cmp #CATCH_WAIT_A
+0e1d: d0 0f     -         bne !end_drop+
+0e1f: 4c 26 0e  -         jmp !missed+
+0e22: c9 0f     -         cmp #CATCH_WAIT_B
+0e24: d0 08     -         bne !end_drop+
+0e26: a9 00     -         lda #$00
+0e28: 8d ad 16  -         sta catch_timer
+0e2b: 4c 2f 0e  -         jmp check_for_catch
+0e2e: 60        -         rts
+0e2f: ad ae 16  - check_for_catch:lda player_position			// check the player position (0-6)
+0e32: 38        -         sec
+0e33: e9 02     -         sbc #$02
+0e35: cd a5 16  -         cmp oildrop_current_track	// against the oil drop track
+0e38: f0 06     -         beq !success+				// if yes, go to success
+0e3a: 20 1f 15  -         jsr silence_all_channels	// stop drop sound cause fire sound is coming
+0e3d: 4c 20 10  -         jmp cause_fire				// if no, the drop has been missed to cause a fire
+0e40: ad b1 16  -         lda player_drop_number		// since it is success (catched)
+0e43: c9 03     -         cmp #$03
+0e45: f0 2e     -         beq !full+
+0e47: ee b1 16  -         inc player_drop_number
+0e4a: 20 ab 0c  -         jsr calculate_player_safe
+0e4d: a9 00     -         lda #$00
+0e4f: 8d a7 16  -         sta oildrop_active
+0e52: 8d a6 16  -         sta oildrop_current_step
+0e55: 8d ad 16  -         sta catch_timer
+0e58: a9 01     -         lda #$01
+0e5a: 8d b2 16  -         sta points_to_add
+0e5d: 8d 95 16  -         sta score_update_flag
+0e60: a9 03     -         lda #$03
+0e62: 8d cd 16  -         sta sfx_type
+0e65: a9 01     -         lda #$01
+0e67: 8d cc 16  -         sta sfx_active
+0e6a: a9 00     -         lda #$00
+0e6c: 8d ce 16  -         sta sfx_counter
+0e6f: a9 08     -         lda #$08                    // 8 frame delay
+0e71: 8d ab 16  -         sta drop_spawn_timer
+0e74: 60        -         rts 
+0e75: 4c 20 10  -         jmp cause_fire
+0e78: ad b1 16  - check_for_bottom_score:lda player_drop_number		// is there any oil to pour?
+0e7b: f0 6f     -         beq !exit+					// if not, exit
+0e7d: ad ae 16  -         lda player_position			// check if the player is at the leftmost position
+0e80: f0 0d     -         beq !at_left_edge+			// if yes, go and check if collector is in the same edge
+0e82: c9 06     -         cmp #$06					// check if the player is at the rightmost position
+0e84: f0 19     -         beq !at_right_edge+			//  if yes, go and check if collector is in the same edge
+0e86: a9 00     -         lda #$00					// not at the edge
+0e88: 8d b4 16  -         sta bucket_poured			// so clear the poured flag
+0e8b: 8d b6 16  -         sta pour_animation_active   // clear animation
+0e8e: 60        -         rts							// otherwise exit
+0e8f: ae c4 16  -         ldx bonus_mode_active
+0e92: d0 1d     -         bne !ok_to_continue+	
+0e94: ae a8 16  -         ldx collector_pointer		// check where the collector is
+0e97: bd 76 16  -         lda collector_table,x
+0e9a: f0 15     -         beq !ok_to_continue+		// if zero, he is on the left edge
+0e9c: 4c 60 10  -         jmp cause_spill				// otherwise, oil is spilled		
+0e9f: ae c4 16  -         ldx bonus_mode_active
+0ea2: d0 0d     -         bne !ok_to_continue+
+0ea4: ae a8 16  -         ldx collector_pointer		// check where the collector is
+0ea7: bd 76 16  -         lda collector_table,x
+0eaa: c9 03     -         cmp #$03
+0eac: f0 03     -         beq !ok_to_continue+
+0eae: 4c 60 10  -         jmp cause_spill				// otherwise, oil is spilled			
+0eb1: ad b4 16  -         lda bucket_poured			// already poured
+0eb4: d0 36     -         bne !exit+					// don't do it again
+0eb6: ad b1 16  -         lda player_drop_number		// check the number of drops in the bucket
+0eb9: f0 31     -         beq !exit+					// if zero, exit
+0ebb: ad ae 16  -         lda player_position			// Trigger pour animation
+0ebe: f0 05     -         beq !trigger_left+			// is the player on the left?
+0ec0: a9 02     -         lda #$02                    // No, he is on the right
+0ec2: 4c c7 0e  -         jmp !set_anim+
+0ec5: a9 01     -         lda #$01                    // yes, he is on the left
+0ec7: 8d b6 16  -         sta pour_animation_active
+0eca: a9 00     -         lda #$00
+0ecc: 8d b7 16  -         sta pour_animation_timer
+0ecf: ae b1 16  -         ldx player_drop_number
+0ed2: ca        -         dex
+0ed3: bd 21 16  -         lda oil_bottom_score,x		// get how many points to add +1
+0ed6: ae c4 16  -         ldx bonus_mode_active
+0ed9: f0 01     -         beq !normal_points+
+0edb: 0a        -         asl                 
+0edc: 8d b3 16  -         sta score_counter		
+0edf: a9 01     -         lda #$01
+0ee1: 8d 95 16  -         sta score_update_flag
+0ee4: 8d b4 16  -         sta bucket_poured			// mark as poured
+0ee7: a9 00     -         lda #$00
+0ee9: 8d b1 16  -         sta player_drop_number
+0eec: 60        -         rts
+0eed: ad b6 16  - update_pour_animation:lda pour_animation_active
+0ef0: f0 12     -         beq !done+
+0ef2: ee b7 16  -         inc pour_animation_timer
+0ef5: ad b7 16  -         lda pour_animation_timer
+0ef8: c9 32     -         cmp #POUR_ANIM_DURATION
+0efa: d0 08     -         bne !done+
+0efc: a9 00     -         lda #$00
+0efe: 8d b6 16  -         sta pour_animation_active
+0f01: 8d b7 16  -         sta pour_animation_timer
+0f04: 60        -         rts
+0f05: ad b8 16  - update_fire_animation:lda fire_active
+0f08: f0 53     -         beq !done+                      // no fire active
+0f0a: ee b9 16  -         inc fire_timer					// Update fire duration
+0f0d: ad b9 16  -         lda fire_timer
+0f10: c9 ff     -         cmp #FIRE_ANIM_DURATION
+0f12: d0 1c     -         bne !continue+
+0f14: ee a2 16  -         inc top_lives				 	// increment top lives and check for game over
+0f17: ad a2 16  -         lda top_lives
+0f1a: c9 03     -         cmp #$03
+0f1c: d0 03     -         bne!+             				// 3 misses = game over
+0f1e: 4c bc 10  -         jmp game_over
+0f21: a9 00     -         lda #$00						// Fire animation done - turn off
+0f23: 8d b8 16  -         sta fire_active
+0f26: 8d b9 16  -         sta fire_timer
+0f29: 8d ba 16  -         sta fire_frame
+0f2c: 8d bb 16  -         sta fire_anim_timer
+0f2f: 60        -         rts
+0f30: ee bb 16  -         inc fire_anim_timer				// Update animation frame
+0f33: ad bb 16  -         lda fire_anim_timer
+0f36: c9 20     -         cmp #FIRE_ANIM_SPEED
+0f38: d0 23     -         bne !done+
+0f3a: a9 00     -         lda #$00
+0f3c: 8d bb 16  -         sta fire_anim_timer
+0f3f: ee ba 16  -         inc fire_frame					// Cycle through 8 animation frames
+0f42: ad ba 16  -         lda fire_frame
+0f45: c9 08     -         cmp #$08
+0f47: d0 05     -         bne !frame_changed+
+0f49: a9 00     -         lda #$00
+0f4b: 8d ba 16  -         sta fire_frame
+0f4e: a9 04     -         lda #$04                   	 // Miss sound type
+0f50: 8d cd 16  -         sta sfx_type
+0f53: a9 01     -         lda #$01
+0f55: 8d cc 16  -         sta sfx_active
+0f58: a9 00     -         lda #$00
+0f5a: 8d ce 16  -         sta sfx_counter
+0f5d: 60        -         rts
+0f5e: ad bc 16  - update_lady_spill:lda lady_spill_active
+0f61: f0 5b     -         beq !done+
+0f63: ee bd 16  -         inc lady_spill_timer
+0f66: ad bd 16  -         lda lady_spill_timer
+0f69: c9 30     -         cmp #LADY_SPILL_ANIM_SPEED
+0f6b: d0 51     -         bne !done+
+0f6d: a9 00     -         lda #$00
+0f6f: 8d bd 16  -         sta lady_spill_timer
+0f72: a9 04     -         lda #$04
+0f74: 8d cd 16  -         sta sfx_type
+0f77: a9 01     -         lda #$01
+0f79: 8d cc 16  -         sta sfx_active
+0f7c: a9 00     -         lda #$00
+0f7e: 8d ce 16  -         sta sfx_counter
+0f81: ee be 16  -         inc lady_spill_frame
+0f84: ad be 16  -         lda lady_spill_frame
+0f87: c9 05     -         cmp #LADY_SPILL_ANIM_FRAMES
+0f89: d0 33     -         bne !done+
+0f8b: ee a3 16  -         inc bottom_lives					// Animation complete (reached frame 5)
+0f8e: ad a3 16  -         lda bottom_lives
+0f91: c9 03     -         cmp #$03
+0f93: d0 03     -         bne !+
+0f95: 4c bc 10  -         jmp game_over
+0f98: a9 00     -         lda #$00
+0f9a: 8d bc 16  -         sta lady_spill_active
+0f9d: 8d be 16  -         sta lady_spill_frame
+0fa0: a9 00     -         lda #$00
+0fa2: 8d a7 16  -         sta oildrop_active
+0fa5: 8d a6 16  -         sta oildrop_current_step
+0fa8: 8d ac 16  -         sta drop_fall_timer
+0fab: a9 40     -         lda #$40            		
+0fad: 8d ab 16  -         sta drop_spawn_timer
+0fb0: 20 1f 15  -         jsr silence_all_channels
+0fb3: a9 00     -         lda #$00
+0fb5: 8d cc 16  -         sta sfx_active
+0fb8: 8d ce 16  -         sta sfx_counter
+0fbb: 8d cf 16  -         sta pwm_counter
+0fbe: 60        -         rts
+0fbf: ad bf 16  - update_gent_spill:lda gent_spill_active
+0fc2: f0 5b     -         beq !done+
+0fc4: ee c0 16  -         inc gent_spill_timer
+0fc7: ad c0 16  -         lda gent_spill_timer
+0fca: c9 30     -         cmp #LADY_SPILL_ANIM_SPEED      // use same speed
+0fcc: d0 51     -         bne !done+
+0fce: a9 00     -         lda #$00
+0fd0: 8d c0 16  -         sta gent_spill_timer
+0fd3: a9 04     -         lda #$04
+0fd5: 8d cd 16  -         sta sfx_type
+0fd8: a9 01     -         lda #$01
+0fda: 8d cc 16  -         sta sfx_active
+0fdd: a9 00     -         lda #$00
+0fdf: 8d ce 16  -         sta sfx_counter
+0fe2: ee c1 16  -         inc gent_spill_frame
+0fe5: ad c1 16  -         lda gent_spill_frame
+0fe8: c9 05     -         cmp #LADY_SPILL_ANIM_FRAMES     // 5 frames
+0fea: d0 33     -         bne !done+
+0fec: ee a3 16  -         inc bottom_lives
+0fef: ad a3 16  -         lda bottom_lives
+0ff2: c9 03     -         cmp #$03
+0ff4: d0 03     -         bne !+
+0ff6: 4c bc 10  -         jmp game_over
+0ff9: a9 00     -         lda #$00
+0ffb: 8d bf 16  -         sta gent_spill_active
+0ffe: 8d c1 16  -         sta gent_spill_frame
+1001: a9 00     -         lda #$00
+1003: 8d a7 16  -         sta oildrop_active
+1006: 8d a6 16  -         sta oildrop_current_step
+1009: 8d ac 16  -         sta drop_fall_timer
+100c: a9 40     -         lda #$40            		
+100e: 8d ab 16  -         sta drop_spawn_timer
+1011: 20 1f 15  -         jsr silence_all_channels
+1014: a9 00     -         lda #$00
+1016: 8d cc 16  -         sta sfx_active
+1019: 8d ce 16  -         sta sfx_counter
+101c: 8d cf 16  -         sta pwm_counter
+101f: 60        -         rts
+1020: ad a5 16  - cause_fire:lda oildrop_current_track
+1023: 18        -         clc
+1024: 69 01     -         adc #$01
+1026: 8d b8 16  -         sta fire_active				// convert 0,1,2 to 1,2,3 (left,mid,right)
+1029: a9 00     -         lda #$00					// reset animation variables
+102b: 8d b9 16  -         sta fire_timer
+102e: 8d ba 16  -         sta fire_frame
+1031: 8d bb 16  -         sta fire_anim_timer		
+1034: a9 00     -         lda #$00					// reset drop variables
+1036: 8d a7 16  -         sta oildrop_active
+1039: 8d a6 16  -         sta oildrop_current_step
+103c: 8d ad 16  -         sta catch_timer
+103f: 8d c9 16  -         sta miss_free_run   
+1042: 8d c7 16  -         sta consecutive_score       
+1045: 8d c8 16  -         sta consecutive_score+1  
+1048: a9 04     -         lda #$04
+104a: 8d cd 16  -         sta sfx_type
+104d: a9 01     -         lda #$01
+104f: 8d cc 16  -         sta sfx_active
+1052: a9 00     -         lda #$00
+1054: 8d ce 16  -         sta sfx_counter
+1057: a9 00     -         lda #$00					// empty player bucket
+1059: 8d b1 16  -         sta player_drop_number
+105c: 20 ab 0c  -         jsr calculate_player_safe	
+105f: 60        -         rts
+1060: ad ae 16  - cause_spill:lda player_position
+1063: c9 06     -         cmp #$06
+1065: f0 10     -         beq !spill_lady+                    // player position 6 = right = lady
+1067: a9 01     -         lda #$01							// position 0 = left = gentleman
+1069: 8d bf 16  -         sta gent_spill_active
+106c: a9 00     -         lda #$00
+106e: 8d c0 16  -         sta gent_spill_timer
+1071: 8d c1 16  -         sta gent_spill_frame
+1074: 4c 84 10  -         jmp !spill_common+
+1077: a9 01     -         lda #$01							// activate lady spill
+1079: 8d bc 16  -         sta lady_spill_active
+107c: a9 00     -         lda #$00
+107e: 8d bd 16  -         sta lady_spill_timer
+1081: 8d be 16  -         sta lady_spill_frame
+1084: 20 1f 15  -         jsr silence_all_channels
+1087: a9 04     -         lda #$04
+1089: 8d cd 16  -         sta sfx_type
+108c: a9 01     -         lda #$01
+108e: 8d cc 16  -         sta sfx_active
+1091: a9 00     -         lda #$00
+1093: 8d ce 16  -         sta sfx_counter
+1096: a9 00     -         lda #$00							// Clear active drop so new one can spawn after animation
+1098: 8d a7 16  -         sta oildrop_active
+109b: 8d a6 16  -         sta oildrop_current_step
+109e: 8d ad 16  -         sta catch_timer
+10a1: 8d ac 16  -         sta drop_fall_timer 
+10a4: 8d c9 16  -         sta miss_free_run
+10a7: 8d c7 16  -         sta consecutive_score      
+10aa: 8d c8 16  -         sta consecutive_score+1 
+10ad: a9 00     -         lda #$00
+10af: 8d 95 16  -         sta score_update_flag   // Stop the update_score routine
+10b2: 8d b3 16  -         sta score_counter       // Clear any remaining points to be added
+10b5: 8d b1 16  -         sta player_drop_number
+10b8: 20 ab 0c  -         jsr calculate_player_safe
+10bb: 60        -         rts
+10bc: a9 00     - game_over:lda #$00					// stop game
+10be: 8d a7 16  -         sta oildrop_active
+10c1: 8d b8 16  -         sta fire_active
+10c4: 8d bc 16  -         sta lady_spill_active
+10c7: 8d bf 16  -         sta gent_spill_active
+10ca: a2 64     -         ldx #$64
+10cc: 20 05 12  -         jsr simple_delay
+10cf: ca        -         dex
+10d0: d0 fa     -         bne !-
+10d2: 78        -         sei							// disable interrupts
+10d3: a9 00     -         lda #$00
+10d5: 8d 1a d0  -         sta $d01a
+10d8: a9 30     -         lda #$30                    // Score sprite pointer
+10da: 8d f8 5f  -         sta Sprite_Pointer
+10dd: a9 80     -         lda #$80                    // X position
+10df: 8d 00 d0  -         sta $d000
+10e2: a9 9d     -         lda #$9d                    // Y position
+10e4: 8d 01 d0  -         sta $d001
+10e7: a9 64     -         lda #$64
+10e9: 8d f9 5f  -         sta Sprite_Pointer+1        // Miss sprite
+10ec: 8d fa 5f  -         sta Sprite_Pointer+2        // Player
+10ef: 8d fb 5f  -         sta Sprite_Pointer+3        // Collector
+10f2: 8d fc 5f  -         sta Sprite_Pointer+4        // Oil/fire
+10f5: 8d fe 5f  -         sta Sprite_Pointer+6        // Gentleman
+10f8: a9 01     -         lda #%00000001
+10fa: 8d 15 d0  -         sta $d015
+10fd: a9 00     -         lda #%00000000              // No doubling yet
+10ff: 8d 17 d0  -         sta $d017
+1102: 8d 1d d0  -         sta $d01d
+1105: a2 64     -         ldx #$64
+1107: 20 05 12  -         jsr simple_delay
+110a: ca        -         dex
+110b: d0 fa     -         bne !-
+110d: a9 67     -         lda #$67
+110f: 8d fd 5f  -         sta Sprite_Pointer+5
+1112: a9 9d     -         lda #$9d
+1114: 8d 0a d0  -         sta $d00a
+1117: a9 50     -         lda #$50
+1119: 8d 0b d0  -         sta $d00b
+111c: a9 02     -         lda #RED
+111e: 8d 2c d0  -         sta $d027+5
+1121: a9 21     -         lda #%00100001              // Sprites 0 and 5
+1123: 8d 15 d0  -         sta $d015
+1126: a9 20     -         lda #%00100000
+1128: 8d 17 d0  -         sta $d017
+112b: 8d 1d d0  -         sta $d01d
+112e: a0 02     -         ldy #$02            
+1130: a2 ff     -         ldx #$ff                  
+1132: 20 05 12  -         jsr simple_delay
+1135: ca        -         dex
+1136: d0 fa     -         bne !in-
+1138: 88        -         dey
+1139: d0 f5     -         bne !out-
+113b: ad 96 16  -         lda score_bcd
+113e: d0 05     -         bne !has_score+             // High byte not zero = at least 100 points
+1140: ad 97 16  -         lda score_bcd+1
+1143: f0 59     -         beq !not_high+              // Both bytes zero = 0 points, skip high score
+1145: ad 96 16  -         lda score_bcd
+1148: cd ca 16  -         cmp high_score_bcd
+114b: 90 51     -         bcc !not_high+
+114d: d0 08     -         bne !new_high+
+114f: ad 97 16  -         lda score_bcd+1
+1152: cd cb 16  -         cmp high_score_bcd+1
+1155: 90 47     -         bcc !not_high+
+1157: ad 96 16  -         lda score_bcd
+115a: 8d ca 16  -         sta high_score_bcd
+115d: ad 97 16  -         lda score_bcd+1
+1160: 8d cb 16  -         sta high_score_bcd+1
+1163: a9 68     -         lda #$68
+1165: 8d fe 5f  -         sta Sprite_Pointer+6
+1168: a9 9d     -         lda #$9d
+116a: 8d 0c d0  -         sta $d00c
+116d: a9 ac     -         lda #$ac
+116f: 8d 0d d0  -         sta $d00d
+1172: a9 07     -         lda #YELLOW
+1174: 8d 2d d0  -         sta $d027+6
+1177: a9 61     -         lda #%01100001              // Sprites 0, 5, and 6
+1179: 8d 15 d0  -         sta $d015
+117c: a9 60     -         lda #%01100000
+117e: 8d 17 d0  -         sta $d017
+1181: 8d 1d d0  -         sta $d01d
+1184: a0 06     -         ldy #$06                // Add outer loop
+1186: a2 ff     -         ldx #$ff                // Increase from $c8 to $ff
+1188: 20 05 12  -         jsr simple_delay
+118b: 8a        -         txa
+118c: 29 07     -         and #$07
+118e: d0 08     -         bne !skip_flash+
+1190: ad 15 d0  -         lda $d015
+1193: 49 40     -         eor #%01000000
+1195: 8d 15 d0  -         sta $d015
+1198: ca        -         dex
+1199: d0 ed     -         bne !flash-
+119b: 88        -         dey
+119c: d0 e8     -         bne !reload_x-
+119e: a0 04     -         ldy #$04
+11a0: a2 ff     -         ldx #$ff
+11a2: 20 05 12  -         jsr simple_delay
+11a5: ca        -         dex
+11a6: d0 fa     -         bne !wait-
+11a8: 88        -         dey
+11a9: d0 f5     -         bne !wait_outer-
+11ab: a9 00     -         lda #$00
+11ad: 8d 11 d0  -         sta $d011                   // Turn off screen
+11b0: a2 32     -         ldx #$32
+11b2: 20 05 12  -         jsr simple_delay
+11b5: ca        -         dex
+11b6: d0 fa     -         bne !-
+11b8: a9 00     -         lda #$00
+11ba: 8d 15 d0  -         sta $d015                   // Disable sprites
+11bd: 8d 17 d0  -         sta $d017                   // Normal height
+11c0: 8d 1d d0  -         sta $d01d                   // Normal width
+11c3: ad 00 dd  -         lda VIC_BANK_POINTER
+11c6: 29 fc     -         and #%11111100
+11c8: 09 02     -         ora #%00000010
+11ca: 8d 00 dd  -         sta VIC_BANK_POINTER
+11cd: a9 70     -         lda #%01110000
+11cf: 8d 18 d0  -         sta GRAPHICS_POINTER
+11d2: a9 08     -         lda #%00001000
+11d4: 8d 16 d0  -         sta $d016                   // Multicolor OFF
+11d7: a9 20     -         lda #value	// space
+11d9: a2 00     -         ldx #0
+11db: 9d 00 5c  -         sta screen, x
+11de: 9d 00 5d  -         sta screen + $100, x
+11e1: 9d 00 5e  -         sta screen + $200, x
+11e4: 9d e9 5e  -         sta screen + $2e9, x
+11e7: e8        -         inx
+11e8: d0 f1     -         bne !loop-
+11ea: a9 0f     -         lda #color
+11ec: a2 00     -         ldx #0
+11ee: 9d 00 d8  -         sta $d800, x
+11f1: 9d 00 d9  -         sta $d800 + $100, x
+11f4: 9d 00 da  -         sta $d800 + $200, x
+11f7: 9d e9 da  -         sta $d800 + $2e9, x
+11fa: e8        -         inx
+11fb: d0 f1     -         bne !loop-
+11fd: a9 1b     -         lda #%00011011              // 25 rows, screen on, TEXT mode
+11ff: 8d 11 d0  -         sta SCREEN_CONTROL_REG
+1202: 4c 89 24  -         jmp text_intro_screen
+1205: 48        - simple_delay:pha               // Save A
+1206: 98        -         tya               // Save Y
+1207: 48        -         pha
+1208: a0 00     -         ldy #$00
+120a: ea        -         nop
+120b: ea        -         nop
+120c: ea        -         nop
+120d: 88        -         dey
+120e: d0 fa     -         bne !-
+1210: 68        -         pla               // Restore Y
+1211: a8        -         tay
+1212: 68        -         pla  
+1213: 60        -         rts
+1214: f8        - add_score:sed                 // Set Decimal mode
+1215: 18        -         clc
+1216: ad 97 16  -         lda score_bcd + 1   // Get tens/ones
+1219: 6d b2 16  -         adc points_to_add
+121c: 8d 97 16  -         sta score_bcd+1
+121f: ad 96 16  -         lda score_bcd
+1222: 69 00     -         adc #$00
+1224: 8d 96 16  -         sta score_bcd
+1227: 18        -         clc
+1228: ad c8 16  -         lda consecutive_score+1
+122b: 6d b2 16  -         adc points_to_add
+122e: 8d c8 16  -         sta consecutive_score+1
+1231: ad c7 16  -         lda consecutive_score
+1234: 69 00     -         adc #$00
+1236: 8d c7 16  -         sta consecutive_score
+1239: d8        -         cld
+123a: ad 96 16  -         lda score_bcd
+123d: c9 10     -         cmp #$10
+123f: d0 0e     -         bne !+
+1241: a9 00     -         lda #$00
+1243: 8d 96 16  -         sta score_bcd
+1246: 8d 97 16  -         sta score_bcd+1
+1249: 8d c7 16  -         sta consecutive_score      
+124c: 8d c8 16  -         sta consecutive_score+1
+124f: ad 97 16  -         lda score_bcd+1
+1252: 29 0f     -         and #$0f
+1254: 8d 98 16  -         sta digit_ones
+1257: ad 97 16  -         lda score_bcd+1
+125a: 4a        -         lsr
+125b: 4a        -         lsr
+125c: 4a        -         lsr
+125d: 4a        -         lsr
+125e: 8d 99 16  -         sta digit_tens
+1261: ad 96 16  -         lda score_bcd
+1264: 29 0f     -         and #$0f
+1266: 8d 9a 16  -         sta digit_huns
+1269: a9 00     -         lda #$00
+126b: 8d 9c 16  -         sta sprite_idx
+126e: 8d 9e 16  -         sta leading_zero_flag
+1271: a0 00     -         ldy #$00
+1273: 8c 9b 16  - row_loop:sty row_temp
+1276: ad 9a 16  -         lda digit_huns
+1279: f0 09     -         beq check_tens        		// If digit is 0, skip to Tens logic
+127b: ee 9e 16  -         inc leading_zero_flag 		// It's not 0, so stop suppressing!
+127e: 20 d1 12  -         jsr get_font_idx
+1281: 4c 89 12  -         jmp draw_h
+1284: a9 0a     - check_tens:lda #10              		 // Point to the "Space" (Index 10)
+1286: 20 d1 12  -         jsr get_font_idx
+1289: bd 2b 15  - draw_h: lda font_library, x
+128c: ae 9c 16  -         ldx sprite_idx
+128f: 9d 00 4c  -         sta DIGIT_SPRITE_ADDR, x
+1292: ad 99 16  -         lda digit_tens
+1295: d0 0a     -         bne force_tens      		 // If it's not 0, we must draw it
+1297: ad 9e 16  -         lda leading_zero_flag 		// Is Hundreds > 0?
+129a: d0 05     -         bne force_tens       		// Yes, so we must draw this 0 (e.g., 105)
+129c: a9 0a     -         lda #10              		// No, Hundreds was 0, so suppress this 0 too
+129e: 4c a4 12  -         jmp get_t
+12a1: ad 99 16  - force_tens:lda digit_tens
+12a4: 20 d1 12  - get_t:  jsr get_font_idx
+12a7: bd 2b 15  -         lda font_library, x
+12aa: ae 9c 16  -         ldx sprite_idx
+12ad: 9d 01 4c  -         sta DIGIT_SPRITE_ADDR+1, x
+12b0: ad 98 16  -         lda digit_ones
+12b3: 20 d1 12  -         jsr get_font_idx
+12b6: bd 2b 15  -         lda font_library, x
+12b9: ae 9c 16  -         ldx sprite_idx
+12bc: 9d 02 4c  -         sta DIGIT_SPRITE_ADDR+2, x
+12bf: ad 9c 16  -         lda sprite_idx
+12c2: 18        -         clc
+12c3: 69 03     -         adc #3              // Each sprite row is 3 bytes wide
+12c5: 8d 9c 16  -         sta sprite_idx
+12c8: ac 9b 16  -         ldy row_temp        // Restore row counter
+12cb: c8        -         iny
+12cc: c0 0c     -         cpy #12             // 12 rows total
+12ce: d0 a3     -         bne row_loop
+12d0: 60        -         rts
+12d1: 8d 9d 16  - get_font_idx:sta math_temp
+12d4: 0a        -         asl                 // A * 2
+12d5: 18        -         clc
+12d6: 6d 9d 16  -         adc math_temp       // A * 3
+12d9: 0a        -         asl                 // A * 6
+12da: 0a        -         asl                 // A * 12
+12db: 18        -         clc
+12dc: 6d 9b 16  -         adc row_temp        // Add the row offset
+12df: aa        -         tax
+12e0: 60        -         rts
+12e1: ad 95 16  - update_score:lda score_update_flag
+12e4: f0 4c     -         beq !skip+
+12e6: ad b3 16  -         lda score_counter
+12e9: d0 11     -         bne !multi_add+
+12eb: 20 14 12  -         jsr add_score
+12ee: a9 00     -         lda #$00
+12f0: 8d 95 16  -         sta score_update_flag
+12f3: 20 33 13  -         jsr check_speed_increase
+12f6: 20 78 13  -         jsr check_bonus_300
+12f9: 4c 32 13  -         jmp !skip+
+12fc: ee b5 16  -         inc score_increment_timer
+12ff: ad b5 16  -         lda score_increment_timer
+1302: c9 05     -         cmp #SCORE_INCREMENT_DELAY
+1304: d0 2c     -         bne !skip+
+1306: a9 00     -         lda #$00
+1308: 8d b5 16  -         sta score_increment_timer
+130b: a9 01     -         lda #$01
+130d: 8d b2 16  -         sta points_to_add
+1310: 20 14 12  -         jsr add_score
+1313: a9 03     -         lda #$03
+1315: 8d cd 16  -         sta sfx_type
+1318: a9 01     -         lda #$01
+131a: 8d cc 16  -         sta sfx_active
+131d: a9 00     -         lda #$00
+131f: 8d ce 16  -         sta sfx_counter
+1322: ce b3 16  -         dec score_counter
+1325: d0 0b     -         bne !skip+
+1327: a9 00     -         lda #$00
+1329: 8d 95 16  -         sta score_update_flag
+132c: 20 33 13  -         jsr check_speed_increase
+132f: 20 78 13  -         jsr check_bonus_300
+1332: 60        -         rts
+1333: ad 96 16  - check_speed_increase:lda score_bcd
+1336: 29 0f     -         and #$0f
+1338: cd c3 16  -         cmp last_hundred				// get the hundreds digits
+133b: f0 11     -         beq !done+
+133d: 8d c3 16  -         sta last_hundred				// check if odd or even
+1340: 29 01     -         and #$01
+1342: d0 0a     -         bne !done+						// if odd, no increase (100,300,500,700,900)
+1344: ad c2 16  -         lda drop_speed_level			// only increase on even hundreds
+1347: c9 04     -         cmp #MAX_SPEED_LEVEL
+1349: b0 03     -         bcs !done+
+134b: ee c2 16  -         inc drop_speed_level
+134e: 60        -         rts
+134f: ad c4 16  - update_bonus_mode:lda bonus_mode_active
+1352: f0 23     -         beq !done+
+1354: ee c5 16  -         inc bonus_mode_timer
+1357: d0 03     -         bne !no_carry+
+1359: ee c6 16  -         inc bonus_mode_timer+1
+135c: ad c6 16  -         lda bonus_mode_timer+1
+135f: c9 05     -         cmp #>BONUS_MODE_DURATION   // Compare high byte first
+1361: 90 14     -         bcc !done+                   // If less than, continue bonus
+1363: d0 07     -         bne !end_bonus+              // If greater than, end bonus
+1365: ad c5 16  -         lda bonus_mode_timer         // High bytes equal, check low byte
+1368: c9 dc     -         cmp #<BONUS_MODE_DURATION
+136a: 90 0b     -         bcc !done+                   // If less than, continue bonus
+136c: a9 00     -         lda #$00
+136e: 8d c4 16  -         sta bonus_mode_active
+1371: 8d c5 16  -         sta bonus_mode_timer
+1374: 8d c6 16  -         sta bonus_mode_timer+1
+1377: 60        -         rts
+1378: ad c7 16  - check_bonus_300:lda consecutive_score
+137b: c9 03     -         cmp #$03
+137d: 90 1f     -         bcc !done+                  // < $0300
+137f: d0 00     -         bne !activate+              // > $03FF, definitely activate
+1381: ad c9 16  -         lda miss_free_run
+1384: f0 18     -         beq !done+
+1386: ad c4 16  -         lda bonus_mode_active
+1389: d0 13     -         bne !done+
+138b: a9 01     -         lda #$01
+138d: 8d c4 16  -         sta bonus_mode_active
+1390: a9 00     -         lda #$00
+1392: 8d c7 16  -         sta consecutive_score
+1395: 8d c8 16  -         sta consecutive_score+1
+1398: 8d a2 16  -         sta top_lives          		// misses are cleard when entering the bonus stage
+139b: 8d a3 16  -         sta bottom_lives  
+139e: 60        -         rts
+139f: ad cc 16  - update_sfx:lda sfx_active				// is there an acitve sfx?
+13a2: f0 3e     -         beq !done+					// if no, exit
+13a4: ad bc 16  -         lda lady_spill_active		// is there any miss?
+13a7: 0d bf 16  -         ora gent_spill_active		// miss will be the priority
+13aa: 0d b8 16  -         ora fire_active
+13ad: f0 0d     -         beq !continue+				// if no, continue
+13af: ad cd 16  -         lda sfx_type
+13b2: c9 04     -         cmp #$04                	// Is the current request a miss sound?
+13b4: f0 06     -         beq !continue+
+13b6: a9 00     -         lda #$00
+13b8: 8d cc 16  -         sta sfx_active
+13bb: 60        -         rts
+13bc: ad cd 16  -         lda sfx_type
+13bf: c9 00     -         cmp #$00
+13c1: d0 03     -         bne !check1+
+13c3: 4c e3 13  -         jmp drop_left
+13c6: c9 01     -         cmp #$01
+13c8: d0 03     -         bne !check2+
+13ca: 4c 19 14  -         jmp drop_mid
+13cd: c9 02     -         cmp #$02
+13cf: d0 03     -         bne !check3+
+13d1: 4c 4f 14  -         jmp drop_right
+13d4: c9 03     -         cmp #$03
+13d6: d0 03     -         bne !check4+
+13d8: 4c 85 14  -         jmp catch_sound
+13db: c9 04     -         cmp #$04
+13dd: d0 03     -         bne !done+
+13df: 4c bb 14  -         jmp miss_sound 
+13e2: 60        -         rts
+13e3: ad ce 16  - drop_left:lda sfx_counter
+13e6: d0 19     -         bne !continue+
+13e8: a9 00     -         lda #$00
+13ea: 8d 07 d4  -         sta $d407
+13ed: a9 25     -         lda #$25            // Medium frequency
+13ef: 8d 08 d4  -         sta $d408
+13f2: a9 00     -         lda #$00
+13f4: 8d 0c d4  -         sta $d40c
+13f7: a9 f5     -         lda #$f5
+13f9: 8d 0d d4  -         sta $d40d
+13fc: a9 11     -         lda #$11            // Triangle wave
+13fe: 8d 0b d4  -         sta $d40b
+1401: ee ce 16  -         inc sfx_counter
+1404: ad ce 16  -         lda sfx_counter
+1407: c9 04     -         cmp #$04
+1409: d0 0d     -         bne !done+
+140b: a9 10     -         lda #$10
+140d: 8d 0b d4  -         sta $d40b
+1410: a9 00     -         lda #$00
+1412: 8d cc 16  -         sta sfx_active
+1415: 8d ce 16  -         sta sfx_counter
+1418: 60        -         rts
+1419: ad ce 16  - drop_mid:lda sfx_counter
+141c: d0 19     -         bne !continue+
+141e: a9 00     -         lda #$00
+1420: 8d 07 d4  -         sta $d407
+1423: a9 18     -         lda #$18            // Lower frequency
+1425: 8d 08 d4  -         sta $d408
+1428: a9 00     -         lda #$00
+142a: 8d 0c d4  -         sta $d40c
+142d: a9 f5     -         lda #$f5
+142f: 8d 0d d4  -         sta $d40d
+1432: a9 11     -         lda #$11            // Triangle wave
+1434: 8d 0b d4  -         sta $d40b
+1437: ee ce 16  -         inc sfx_counter
+143a: ad ce 16  -         lda sfx_counter
+143d: c9 04     -         cmp #$04
+143f: d0 0d     -         bne !done+
+1441: a9 10     -         lda #$10
+1443: 8d 0b d4  -         sta $d40b
+1446: a9 00     -         lda #$00
+1448: 8d cc 16  -         sta sfx_active
+144b: 8d ce 16  -         sta sfx_counter
+144e: 60        -         rts
+144f: ad ce 16  - drop_right:lda sfx_counter
+1452: d0 19     -         bne !continue+
+1454: a9 00     -         lda #$00
+1456: 8d 07 d4  -         sta $d407
+1459: a9 30     -         lda #$30            // Higher frequency
+145b: 8d 08 d4  -         sta $d408
+145e: a9 00     -         lda #$00
+1460: 8d 0c d4  -         sta $d40c
+1463: a9 f5     -         lda #$f5
+1465: 8d 0d d4  -         sta $d40d
+1468: a9 11     -         lda #$11            // Triangle wave
+146a: 8d 0b d4  -         sta $d40b
+146d: ee ce 16  -         inc sfx_counter
+1470: ad ce 16  -         lda sfx_counter
+1473: c9 04     -         cmp #$04
+1475: d0 0d     -         bne !done+
+1477: a9 10     -         lda #$10
+1479: 8d 0b d4  -         sta $d40b
+147c: a9 00     -         lda #$00
+147e: 8d cc 16  -         sta sfx_active
+1481: 8d ce 16  -         sta sfx_counter
+1484: 60        -         rts
+1485: ad ce 16  - catch_sound:lda sfx_counter
+1488: d0 19     -         bne !continue+
+148a: a9 00     -         lda #$00
+148c: 8d 07 d4  -         sta $d407
+148f: a9 35     -         lda #$35            // Highest frequency
+1491: 8d 08 d4  -         sta $d408
+1494: a9 00     -         lda #$00
+1496: 8d 0c d4  -         sta $d40c
+1499: a9 f5     -         lda #$f5
+149b: 8d 0d d4  -         sta $d40d
+149e: a9 11     -         lda #$11            // Triangle wave
+14a0: 8d 0b d4  -         sta $d40b
+14a3: ee ce 16  -         inc sfx_counter
+14a6: ad ce 16  -         lda sfx_counter
+14a9: c9 04     -         cmp #$04
+14ab: d0 0d     -         bne !done+
+14ad: a9 10     -         lda #$10
+14af: 8d 0b d4  -         sta $d40b
+14b2: a9 00     -         lda #$00
+14b4: 8d cc 16  -         sta sfx_active
+14b7: 8d ce 16  -         sta sfx_counter
+14ba: 60        -         rts
+14bb: ad ce 16  - miss_sound:lda sfx_counter
+14be: d0 23     -         bne !continue+
+14c0: a9 80     -         lda #$80            // Higher frequency
+14c2: 8d 0e d4  -         sta $d40e
+14c5: a9 0f     -         lda #$0f            // Higher high byte
+14c7: 8d 0f d4  -         sta $d40f
+14ca: a9 00     -         lda #$00
+14cc: 8d 13 d4  -         sta $d413
+14cf: a9 f0     -         lda #$f0
+14d1: 8d 14 d4  -         sta $d414
+14d4: a9 08     -         lda #$08            // Pulse width
+14d6: 8d 10 d4  -         sta $d410
+14d9: a9 18     -         lda #$18
+14db: 8d 11 d4  -         sta $d411
+14de: a9 41     -         lda #$41            // Pulse wave for buzz
+14e0: 8d 12 d4  -         sta $d412
+14e3: ee cf 16  -         inc pwm_counter
+14e6: ad cf 16  -         lda pwm_counter
+14e9: 29 01     -         and #$01            // Check bit 0
+14eb: f0 0d     -         beq !width1+
+14ed: a9 08     -         lda #$08
+14ef: 8d 10 d4  -         sta $d410
+14f2: a9 18     -         lda #$18
+14f4: 8d 11 d4  -         sta $d411
+14f7: 4c 04 15  -         jmp !done_pwm+
+14fa: a9 10     -         lda #$10
+14fc: 8d 10 d4  -         sta $d410
+14ff: a9 10     -         lda #$10
+1501: 8d 11 d4  -         sta $d411
+1504: ee ce 16  -         inc sfx_counter
+1507: ad ce 16  -         lda sfx_counter
+150a: c9 08     -         cmp #$08            // Duration (10 frames as you liked)
+150c: d0 10     -         bne !done+
+150e: a9 40     -         lda #$40
+1510: 8d 12 d4  -         sta $d412
+1513: a9 00     -         lda #$00
+1515: 8d cc 16  -         sta sfx_active
+1518: 8d ce 16  -         sta sfx_counter
+151b: 8d cf 16  -         sta pwm_counter
+151e: 60        -         rts
+151f: a9 00     - silence_all_channels:lda #$00
+1521: 8d 04 d4  -         sta $d404   // Voice 1 Control (Gate Off)
+1524: 8d 0b d4  -         sta $d40b   // Voice 2 Control (Gate Off)
+1527: 8d 12 d4  -         sta $d412   // Voice 3 Control (Gate Off)
+152a: 60        -         rts
+152b: 7c ba c6 c6 c6 00 00 c6 c6 c6 ba 7c              - font_library:.byte $7c, $ba, $c6, $c6, $c6, $00, $00, $c6, $c6, $c6, $ba, $7c	    // 0
+1537: 02 06 06 06 06 00 00 06 06 06 06 02              -         .byte $02, $06, $06, $06, $06, $00, $00, $06, $06, $06, $06, $02	    // 1
+1543: fc 7a 06 06 06 7a bc c0 c0 c0 bc 7e              -         .byte $fc, $7a, $06, $06, $06, $7a, $bc, $c0, $c0, $c0, $bc, $7e	    // 2
+154f: fc 7a 06 06 06 7a 3c 06 06 06 7a fc              -         .byte $fc, $7a, $06, $06, $06, $7a, $3c, $06, $06, $06, $7a, $fc	    // 3
+155b: 82 c6 c6 c6 c6 ba 7c 06 06 06 06 02              -         .byte $82, $c6, $c6, $c6, $c6, $ba, $7c, $06, $06, $06, $06, $02	    // 4
+1567: 7e bc c0 c0 c0 bc 7a 06 06 06 7a fc              -         .byte $7e, $bc, $c0, $c0, $c0, $bc, $7a, $06, $06, $06, $7a, $fc	    // 5
+1573: 7e bc c0 c0 c0 bc 7a c6 c6 c6 ba 7c              -         .byte $7e, $bc, $c0, $c0, $c0, $bc, $7a, $c6, $c6, $c6, $ba, $7c	    // 6
+157f: fc 7a 06 06 06 02 04 06 06 06 06 02              -         .byte $fc, $7a, $06, $06, $06, $02, $04, $06, $06, $06, $06, $02	    // 7
+158b: 7c ba c6 c6 c6 ba 7c c6 c6 c6 ba 7c              -         .byte $7c, $ba, $c6, $c6, $c6, $ba, $7c, $c6, $c6, $c6, $ba, $7c	    // 8
+1597: 7c ba c6 c6 c6 ba 7c 06 06 06 7a fc              -         .byte $7c, $ba, $c6, $c6, $c6, $ba, $7c, $06, $06, $06, $7a, $fc	    // 9
+15a3: 00 00 00 00 00 00 00 00 00 00 00 00              -         .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00		// space
+15af: 61 62     - sprite_top_0_pointer:.byte $61, $62									// game A/B
+15b1: 64 4a 4b 4c                                      - sprite_top_1_pointer:.byte $64, $4a, $4b, $4c						// top miss
+15b5: 3f 40 40 40 00                                   - sprite_top_2_pointer:.byte $3f, $40, $40, $40, $00					// oil drop	
+15ba: 31 31 32 33 34 35 35                             - sprite_top_3_pointer:.byte $31, $31, $32, $33, $34, $35, $35			// empty bucket pointers 
+15c1: 31 31 36 37 38 35 35                             -         .byte $31, $31, $36, $37, $38, $35, $35			// 1 drop bucket pointers
+15c8: 31 31 39 3a 3b 35 35                             -         .byte $31, $31, $39, $3a, $3b, $35, $35			// 2 drop bucket pointers
+15cf: 31 31 3c 3d 3e 35 35                             -         .byte $31, $31, $3c, $3d, $3e, $35, $35			// 3 drop bucket pointers
+15d6: 41 42 43 41 42 43 41 42                          - sprite_top_4_l_pointer:.byte $41, $42, $43, $41, $42, $43, $41, $42	// left fire	
+15de: 44 45 46 44 45 46 44 45                          - sprite_top_4_m_pointer:.byte $44, $45, $46, $44, $45, $46, $44, $45	// middle fire
+15e6: 47 48 49 47 48 49 47 48                          - sprite_top_4_r_pointer:.byte $47, $48, $49, $47, $48, $49, $47, $48	// right fire
+15ee: 30        - sprite_bottom_0_pointer:.byte $30								// score
+15ef: 64 4d 4e 4f                                      - sprite_bottom_1_pointer:.byte $64, $4d, $4e, $4f				// bottom miss
+15f3: 51 50 64 64 64 52 53                             - sprite_bottom_2_pointer:.byte $51, $50, $64, $64, $64, $52, $53	// bucket man left & right
+15fa: 54 55 56 57                                      - sprite_bottom_3_pointer:.byte $54, $55, $56, $57				// collector
+15fe: 5e 5f     - sprite_bottom_4_pointer:.byte $5e, $5f							// spilling oil (oil on floor stays), both for lady and gentleman
+1600: 58 59 5a 59                                      - sprite_bottom_5_pointer:.byte $58, $59, $5a, $59				// lady animation
+1604: 5b 5c 5d 5c                                      - sprite_bottom_6_pointer:.byte $5b, $5c, $5d, $5c				// gentleman animation
+1608: 65 66 60  - sprite_bottom_7_pointer:.byte $65, $66, $60						// oil droping from player & angry icon (puff) for gentleman
+160b: 01 00 02 01 02 00 01 02 00                       - oildrop_spawn_pattern:.byte $01, $00, $02, $01, $02, $00, $01, $02, $00
+1614: 02 01 00 02 01 00                                -         .byte $02, $01, $00, $02, $01, $00		// 0-1-2 = left-mid-right
+161a: 75 9f c7  - oildrop_x_coord:.byte $75, $9f, $c7				// X positions for the 3 horizontal tracks
+161d: 3c 46 50 5c                                      - oildrop_y_coord:.byte $3c, $46, $50, $5c		// Y positions: 0=Spawn, 1=Fall, 2=Fall, 3=Catch Zone
+1621: 01 02 05  - oil_bottom_score:.byte $01, $02,$05				// 1 point for 1 drop, 2 points for 2 drops
+1624: 22 1f 1c 19 16 13                                - drop_fall_speed_table_a:.byte $22, $1f, $1c, $19, $16, $13	// drop fall speed table for game A
+162a: 1f 1c 19 16 13 10                                - drop_fall_speed_table_b:.byte $1f, $1c, $19, $16, $13, $10	// drop fall speed table for game B
+1630: 60 60 73 9d c5 dc dc                             - player_x_coord:.byte $60, $60, $73, $9d, $c5, $dc, $dc
+1637: 60 60 73 9d c5 dc dc                             -         .byte $60, $60, $73, $9d, $c5, $dc, $dc
+163e: 60 60 73 9d c5 dc dc                             -         .byte $60, $60, $73, $9d, $c5, $dc, $dc
+1645: 60 60 73 9d c5 dc dc                             -         .byte $60, $60, $73, $9d, $c5, $dc, $dc
+164c: 65 65 63 63 63 65 65                             - player_y_coord:.byte $65, $65, $63, $63, $63, $65, $65
+1653: 65 65 63 63 63 65 65                             -         .byte $65, $65, $63, $63, $63, $65, $65
+165a: 65 65 63 63 63 65 65                             -         .byte $65, $65, $63, $63, $63, $65, $65
+1661: 65 65 63 63 63 65 65                             -         .byte $65, $65, $63, $63, $63, $65, $65
+1668: 87 87 00 00 00 ca ca                             - player_bot_x_coord:.byte $87, $87, $00, $00, $00, $ca, $ca
+166f: af af 00 00 00 af af                             - player_bot_y_coord:.byte $af, $af, $00, $00, $00, $af, $af
+1676: 03 02 01 00 01 02                                - collector_table:.byte $03, $02, $01, $00, $01, $02
+167c: 83 99 b5 cd                                      - collector_x_coord:.byte $83, $99, $b5, $cd
+1680: c5        - collector_y_coord:.byte $c5
+1681: 2a 28 24 22 1e                                   - collector_speed_table_a:.byte $2a, $28, $24, $22, $1e  // collector speeds per level for game A
+1686: 48 42 3e 38 32                                   - collector_edge_wait_table_a:.byte $48, $42, $3e, $38, $32  // edge waits per level for game A
+168b: 2a 26 22 20 1c                                   - collector_speed_table_b:.byte $2a, $26, $22, $20, $1c  // collector speeds per level for game B
+1690: 38 34 30 2a 26                                   - collector_edge_wait_table_b:.byte $38, $34, $30, $2a, $26	// edge waits per level for game B
+1695: 00        - score_update_flag:.byte $00
+1696: 00 00     - score_bcd:.byte $00, $00      // Stores 0000
+1698: 00        - digit_ones:.byte $00
+1699: 00        - digit_tens:.byte $00
+169a: 00        - digit_huns:.byte $00
+169b: 00        - row_temp:.byte $00
+169c: 00        - sprite_idx:.byte $00
+169d: 00        - math_temp:.byte $00
+169e: 00        - leading_zero_flag:.byte $00
+169f: 4e        - leftkey:.byte $4e			// n
+16a0: 4d        - rightkey:.byte $4d			// m	
+16a1: 00        - game_mode:.byte $00			// 0=game A		1=game B
+16a2: 00        - top_lives:.byte $00
+16a3: 00        - bottom_lives:.byte $00
+16a4: 00        - oildrop_table_index:.byte $00			// index for looking at the spawn table
+16a5: 00        - oildrop_current_track:.byte $00			// current oil drop track (horizontally 1-2-3)
+16a6: 00        - oildrop_current_step:.byte $00			// current oil drop step (vertically 1-2-3-4)
+16a7: 00        - oildrop_active:.byte $00
+16a8: 00        - collector_pointer:.byte $00
+16a9: 00        - collector_timer:.byte $00
+16aa: 00        - frame_done_flag:.byte $00			// sync flag (IRQ and main loop)
+16ab: 00        - drop_spawn_timer:.byte $00
+16ac: 00        - drop_fall_timer:.byte $00
+16ad: 00        - catch_timer:.byte $00
+16ae: 03        - player_position:.byte $03			// between 0-6, starting position = 3 middle
+16af: 00        - player_position_temp:.byte $00
+16b0: 03        - player_pointer:.byte $03			// calculated togeter with the position and number of drops
+16b1: 00        - player_drop_number:.byte $00			// between 0-3
+16b2: 00        - points_to_add:.byte $00
+16b3: 00        - score_counter:.byte $00
+16b4: 00        - bucket_poured:.byte $00
+16b5: 00        - score_increment_timer:.byte $00
+16b6: 00        - pour_animation_active:.byte $00   		// 0=off, 1=pouring left, 2=pouring right
+16b7: 00        - pour_animation_timer:.byte $00
+16b8: 00        - fire_active:.byte $00           // 0=no fire, 1=left, 2=middle, 3=right
+16b9: 00        - fire_timer:.byte $00           // counts frames fire has been active
+16ba: 00        - fire_frame:.byte $00           // current animation frame (0-7)
+16bb: 00        - fire_anim_timer:.byte $00           // counts frames until next animation frame
+16bc: 00        - lady_spill_active:.byte $00           // 0=no spill, 1=spilling
+16bd: 00        - lady_spill_timer:.byte $00           // counts frames between steps
+16be: 00        - lady_spill_frame:.byte $00  
+16bf: 00        - gent_spill_active:.byte $00           // 0=no spill, 1=spilling
+16c0: 00        - gent_spill_timer:.byte $00
+16c1: 00        - gent_spill_frame:.byte $00
+16c2: 00        - drop_speed_level:.byte $00
+16c3: 00        - last_hundred:.byte $00 
+16c4: 00        - bonus_mode_active:.byte $00        	// 0=normal, 1=bonus mode active
+16c5: 00 00     - bonus_mode_timer:.word $0000        	// counts frames in bonus mode
+16c7: 00 00     - consecutive_score:.word $0000 		// Tracks score since last miss (16-bit BCD)
+16c9: 00        - miss_free_run:.byte $00   
+16ca: 00 00     - high_score_bcd:.byte $00, $00
+16cc: 00        - sfx_active:.byte $00      // 0=off, 1=playing
+16cd: 00        - sfx_type:.byte $00      // 0=left drop, 1=mid drop, 2=right drop, 3=catch, 4=miss
+16ce: 00        - sfx_counter:.byte $00      // Frame counter for duration
+16cf: 00        - pwm_counter:.byte $00      // For pulse width modulation
+
+[Intro Screen]
+2400: a9 00     - intro_screen:lda #<SourceAddress
+2402: 85 f7     -         sta $f7
+2404: a9 88     -         lda #>SourceAddress
+2406: 85 f8     -         sta $f8
+2408: a9 00     -         lda #<TargetAddress
+240a: 85 f9     -         sta $f9 
+240c: a9 5c     -         lda #>TargetAddress
+240e: 85 fa     -         sta $fa
+2410: a2 00     -         ldx #$00
+2412: a0 00     - loop1:  ldy #$00
+2414: b1 f7     - loop2:  lda ($f7),y             
+2416: 91 f9     -         sta ($f9),y            
+2418: c8        -         iny
+2419: d0 f9     -         bne loop2
+241b: e6 f8     -         inc $f8
+241d: e6 fa     -         inc $fa 
+241f: e8        -         inx
+2420: e0 04     -         cpx #$04
+2422: d0 ee     -         bne loop1
+2424: a0 00     -         ldy #$00
+2426: b9 00 5c  -         lda TargetAddress,y 	// get the character value from screen position
+2429: aa        -         tax 
+242a: bd 00 48  -         lda AttribAddress,x 			// get the attribute of the character
+242d: 99 00 d8  -         sta $d800,y 		// and store it to its color RAM
+2430: b9 00 5d  -         lda TargetAddress+$100,y
+2433: aa        -         tax 
+2434: bd 00 48  -         lda AttribAddress,x 
+2437: 99 00 d9  -         sta $d800+$100,y
+243a: b9 00 5e  -         lda TargetAddress+$200,y
+243d: aa        -         tax 
+243e: bd 00 48  -         lda AttribAddress,x 
+2441: 99 00 da  -         sta $d800+$200,y
+2444: b9 00 5f  -         lda TargetAddress+$300,y
+2447: aa        -         tax 
+2448: bd 00 48  -         lda AttribAddress,x 
+244b: 99 00 db  -         sta $d800+$300,y
+244e: c8        -         iny 
+244f: d0 d5     -         bne !-
+2451: a9 07     -         lda #$07
+2453: 85 02     -         sta smooth
+2455: a9 00     -         lda #$00            // Song number 0
+2457: 20 00 30  -         jsr music_init      // Initialize the GoatTracker tune
+245a: a9 2c     -         lda #<intro_message
+245c: a0 27     -         ldy #>intro_message
+245e: 8d d9 26  -         sta read+1
+2461: 8c da 26  -         sty read+2
+2464: a9 86     -         lda #<textirq1
+2466: 8d 14 03  -         sta $314
+2469: a9 26     -         lda #>textirq1
+246b: 8d 15 03  -         sta $315
+246e: a9 1b     -         lda #$1b
+2470: 8d 11 d0  -         sta $d011
+2473: a9 7f     -         lda #$7f
+2475: 8d 0d dc  -         sta $dc0d
+2478: a9 01     -         lda #$01
+247a: 8d 1a d0  -         sta $d01a
+247d: ad 0d dc  -         lda $dc0d
+2480: ad 0d dd  -         lda $dd0d
+2483: 58        -         cli
+2484: 20 e4 ff  - hold:   jsr $ffe4       
+2487: f0 fb     -         beq hold 
+2489: a9 00     - text_intro_screen:lda #color
+248b: 8d 20 d0  -         sta $d020
+248e: a9 00     -         lda #color
+2490: 8d 21 d0  -         sta $d021
+2493: a9 20     -         lda #value	// space
+2495: a2 00     -         ldx #0
+2497: 9d 00 5c  -         sta screen, x
+249a: 9d 00 5d  -         sta screen + $100, x
+249d: 9d 00 5e  -         sta screen + $200, x
+24a0: 9d e9 5e  -         sta screen + $2e9, x
+24a3: e8        -         inx
+24a4: d0 f1     -         bne !loop-
+24a6: a9 0f     -         lda #color
+24a8: a2 00     -         ldx #0
+24aa: 9d 00 d8  -         sta $d800, x
+24ad: 9d 00 d9  -         sta $d800 + $100, x
+24b0: 9d 00 da  -         sta $d800 + $200, x
+24b3: 9d e9 da  -         sta $d800 + $2e9, x
+24b6: e8        -         inx
+24b7: d0 f1     -         bne !loop-
+24b9: a9 00     -         lda #<VIC_SCREEN_MEMORY                 // write text data to screen
+24bb: 85 fb     -         sta screen_ptr
+24bd: a9 5c     -         lda #>VIC_SCREEN_MEMORY
+24bf: 85 fc     -         sta screen_ptr+1
+24c1: a9 d3     -         lda #<info_text
+24c3: 85 fd     -         sta data_ptr
+24c5: a9 28     -         lda #>info_text
+24c7: 85 fe     -         sta data_ptr+1
+24c9: a2 00     -         ldx #$00
+24cb: a0 00     -         ldy #$00
+24cd: b1 fd     - itext:  lda (data_ptr),y
+24cf: 91 fb     -         sta (screen_ptr),y        
+24d1: c8        -         iny
+24d2: d0 f9     -         bne itext
+24d4: e6 fc     -         inc screen_ptr+1
+24d6: e6 fe     -         inc data_ptr+1
+24d8: e8        -         inx
+24d9: e0 04     -         cpx #$04
+24db: d0 f0     -         bne itext
+24dd: 20 08 27  -         jsr display_high_score
+24e0: ad a1 16  -         lda game_mode   
+24e3: 18        -         clc
+24e4: 69 01     -         adc #$01
+24e6: 8d 24 5e  -         sta VIC_SCREEN_MEMORY + (40*13) + 28
+24e9: a2 00     -         ldx #$00
+24eb: a9 01     -         lda #WHITE
+24ed: 9d 50 d8  -         sta $d800 + (40*2),x
+24f0: e8        -         inx
+24f1: e0 28     -         cpx #$28
+24f3: d0 f6     -         bne !-
+24f5: a2 00     -         ldx #$00
+24f7: a9 01     -         lda #WHITE
+24f9: 9d 78 d8  -         sta $d800 + (40*3),x
+24fc: e8        -         inx
+24fd: e0 28     -         cpx #$28
+24ff: d0 f6     -         bne !-
+2501: a2 00     -         ldx #$00
+2503: a9 07     -         lda #YELLOW
+2505: 9d c8 d8  -         sta $d800 + (40*5),x
+2508: 9d f0 d8  -         sta $d800 + (40*6),x
+250b: 9d 18 d9  -         sta $d800 + (40*7),x
+250e: 9d 40 d9  -         sta $d800 + (40*8),x
+2511: e8        -         inx
+2512: e0 28     -         cpx #$28
+2514: d0 ed     -         bne !-
+2516: a2 00     -         ldx #$00
+2518: a9 0d     -         lda #LIGHT_GREEN
+251a: 9d 90 d9  -         sta $d800 + (40*10),x
+251d: e8        -         inx
+251e: e0 28     -         cpx #$28
+2520: d0 f6     -         bne !-
+2522: a2 00     -         ldx #$00
+2524: a9 05     -         lda #GREEN
+2526: 9d e0 d9  -         sta $d800 + (40*12),x
+2529: 9d 08 da  -         sta $d800 + (40*13),x
+252c: e8        -         inx
+252d: e0 28     -         cpx #$28
+252f: d0 f3     -         bne !-
+2531: a2 00     -         ldx #$00
+2533: a9 0d     -         lda #LIGHT_GREEN
+2535: 9d 58 da  -         sta $d800 + (40*15),x
+2538: 9d 80 da  -         sta $d800 + (40*16),x
+253b: e8        -         inx
+253c: e0 28     -         cpx #$28
+253e: d0 f3     -         bne !-
+2540: a2 00     -         ldx #$00
+2542: a9 05     -         lda #GREEN
+2544: 9d d0 da  -         sta $d800 + (40*18),x
+2547: e8        -         inx
+2548: e0 28     -         cpx #$28
+254a: d0 f6     -         bne !-
+254c: a2 00     -         ldx #$00
+254e: a9 01     -         lda #WHITE
+2550: 9d f8 da  -         sta $d800 + (40*19),x
+2553: e8        -         inx
+2554: e0 f0     -         cpx #$f0
+2556: d0 f6     -         bne !-
+2558: ad 9f 16  -         lda leftkey
+255b: 20 56 26  -         jsr key_to_char                         // Convert PETSCII to screen code
+255e: 8d 87 5e  -         sta VIC_SCREEN_MEMORY + (40*16) + 7
+2561: ad a0 16  -         lda rightkey
+2564: 20 56 26  -         jsr key_to_char                         // Convert PETSCII to screen code
+2567: 8d 94 5e  -         sta VIC_SCREEN_MEMORY + (40*16) + 20
+256a: 20 08 27  -         jsr display_high_score
+256d: 20 fd 26  -         jsr stop_music
+2570: a9 31     -         lda #$31
+2572: 8d 14 03  -         sta $0314
+2575: a9 ea     -         lda #$ea
+2577: 8d 15 03  -         sta $0315
+257a: a9 1b     -         lda #$1b
+257c: 8d 11 d0  -         sta $d011
+257f: a9 00     -         lda #$00
+2581: 8d 16 d0  -         sta $d016
+2584: a9 00     -         lda #$00
+2586: 8d 1a d0  -         sta $d01a
+2589: 58        -         cli 
+258a: a9 01     -         lda #$01                
+258c: 8d 89 02  -         sta $0289		// disable keyboard buffer
+258f: a9 7f     -         lda #$7f
+2591: 8d 8a 02  -         sta $028a		// disable key repeat
+2594: 20 9f ff  - kloop:  jsr $ff9f                // waits for any key
+2597: 20 e4 ff  -         jsr $ffe4       
+259a: f0 f8     -         beq kloop 
+259c: c9 85     -         cmp #$85                // f1 key
+259e: f0 0b     -         beq !+                  // go to start
+25a0: c9 86     -         cmp #$86                // f3 key
+25a2: f0 0a     -         beq change_game_type    // toggle game type
+25a4: c9 87     -         cmp #$87                // f5 key
+25a6: f0 1a     -         beq new_key             // assign new keys for control
+25a8: 4c 94 25  -         jmp kloop
+25ab: 4c 5b 08  -         jmp main
+25ae: ad a1 16  - change_game_type:lda game_mode
+25b1: 49 01     -         eor #$01
+25b3: 8d a1 16  -         sta game_mode
+25b6: ad a1 16  -         lda game_mode
+25b9: 18        -         clc
+25ba: 69 01     -         adc #$01
+25bc: 8d 24 5e  -         sta VIC_SCREEN_MEMORY + (40*13) +28     // write the current type on screen
+25bf: 4c 94 25  -         jmp kloop
+25c2: a2 00     - new_key:ldx #$00
+25c4: bd bb 2c  - key_l:  lda new_left_key_text,x
+25c7: 9d 4a 5f  -         sta VIC_SCREEN_MEMORY + $34a,x          // write message to screen
+25ca: e8        -         inx
+25cb: e0 28     -         cpx #$28
+25cd: d0 f5     -         bne key_l
+25cf: 20 9f ff  -         jsr $ff9f                               // clear keyboard buffer
+25d2: 20 e4 ff  -         jsr $ffe4
+25d5: d0 f8     -         bne !-
+25d7: 20 9f ff  - lk:     jsr $ff9f 
+25da: 20 e4 ff  -         jsr $ffe4                               // get the new key for left
+25dd: f0 f8     -         beq lk
+25df: 20 28 26  -         jsr validate_key                        // validate for only letters, numbers, space and curser keys
+25e2: 90 f3     -         bcc lk 
+25e4: 8d 9f 16  -         sta leftkey
+25e7: 20 56 26  -         jsr key_to_char                         // ok, convert it  
+25ea: 8d 87 5e  -         sta VIC_SCREEN_MEMORY + (40*16) + 7     // write on screen
+25ed: a2 00     -         ldx #$00
+25ef: bd e3 2c  - key_r:  lda new_right_key_text,x
+25f2: 9d 4a 5f  -         sta VIC_SCREEN_MEMORY + $34a,x          // write message to screen 
+25f5: e8        -         inx
+25f6: e0 28     -         cpx #$28
+25f8: d0 f5     -         bne key_r   
+25fa: 20 9f ff  -         jsr $ff9f                                // clear keyboard buffer
+25fd: 20 e4 ff  -         jsr $ffe4
+2600: d0 f8     -         bne !-
+2602: 20 9f ff  - rk:     jsr $ff9f 
+2605: 20 e4 ff  -         jsr $ffe4                               // get the new key for right
+2608: f0 f8     -         beq rk
+260a: 20 28 26  -         jsr validate_key
+260d: 90 f3     -         bcc rk
+260f: 8d a0 16  -         sta rightkey
+2612: 20 56 26  -         jsr key_to_char
+2615: 8d 94 5e  -         sta VIC_SCREEN_MEMORY + (40*16) + 20
+2618: a2 00     -         ldx #$00                                // finally clear the new key text
+261a: bd 0b 2d  - key_done:lda new_keys_assigned,x
+261d: 9d 4a 5f  -         sta VIC_SCREEN_MEMORY + $34a,x          
+2620: e8        -         inx
+2621: e0 28     -         cpx #$28
+2623: d0 f5     -         bne key_done
+2625: 4c 94 25  -         jmp kloop
+2628: c9 41     - validate_key:cmp #$41                // check with letter A value
+262a: 90 06     -         bcc !not_letter+        // if smaller, it's no letter        
+262c: c9 5b     -         cmp #$5b                // check with letter Z value
+262e: b0 02     -         bcs !not_letter+        // if greater, it's no letter
+2630: 38        -         sec                     // Valid letter
+2631: 60        -         rts
+2632: c9 30     -         cmp #$30
+2634: 90 06     -         bcc !not_number+
+2636: c9 3a     -         cmp #$3a
+2638: b0 02     -         bcs !not_number+
+263a: 38        -         sec                     // Valid number
+263b: 60        -         rts
+263c: c9 20     -         cmp #$20
+263e: d0 02     -         bne !not_space+
+2640: 38        -         sec                     // Valid space
+2641: 60        -         rts
+2642: c9 91     -         cmp #$91                // Cursor UP
+2644: f0 0e     -         beq !valid+
+2646: c9 11     -         cmp #$11                // Cursor DOWN
+2648: f0 0a     -         beq !valid+
+264a: c9 9d     -         cmp #$9d                // Cursor LEFT
+264c: f0 06     -         beq !valid+
+264e: c9 1d     -         cmp #$1d                // Cursor RIGHT
+2650: f0 02     -         beq !valid+
+2652: 18        -         clc
+2653: 60        -         rts
+2654: 38        -         sec
+2655: 60        -         rts
+2656: c9 91     - key_to_char:cmp #$91                // Cursor UP
+2658: d0 03     -         bne !+
+265a: a9 1c     -         lda #28                // "^" up arrow
+265c: 60        -         rts
+265d: c9 11     -         cmp #$11                // Cursor DOWN  
+265f: d0 03     -         bne !+
+2661: a9 1d     -         lda #29                // Down arrow character
+2663: 60        -         rts
+2664: c9 9d     -         cmp #$9d                // Cursor LEFT
+2666: d0 03     -         bne !+
+2668: a9 1f     -         lda #31                // "<" left arrow
+266a: 60        -         rts
+266b: c9 1d     -         cmp #$1d                // Cursor RIGHT
+266d: d0 03     -         bne !+
+266f: a9 1e     -         lda #30                // ">" right arrow
+2671: 60        -         rts
+2672: c9 20     -         cmp #$20                // SPACE
+2674: d0 03     -         bne !+
+2676: a9 25     -         lda #37                // "_" underscore to represent space
+2678: 60        -         rts
+2679: c9 41     -         cmp #$41
+267b: 90 08     -         bcc !numbers+
+267d: c9 5b     -         cmp #$5b  
+267f: b0 04     -         bcs !numbers+
+2681: 38        -         sec
+2682: e9 40     -         sbc #$40                // A-Z: subtract 64
+2684: 60        -         rts
+2685: 60        -         rts
+2686: ee 19 d0  - textirq1:inc $d019
+2689: a9 00     -         lda #$00 
+268b: 8d 12 d0  -         sta $d012
+268e: a5 02     -         lda smooth         //Scroll 
+2690: 8d 16 d0  -         sta $d016
+2693: a9 a3     -         lda #<textirq2
+2695: a2 26     -         ldx #>textirq2
+2697: 8d 14 03  -         sta $314
+269a: 8e 15 03  -         stx $315
+269d: 20 03 30  -         jsr music_play
+26a0: 4c 7e ea  -         jmp $ea7e
+26a3: ee 19 d0  - textirq2:inc $d019
+26a6: a9 e0     -         lda #$e0
+26a8: 8d 12 d0  -         sta $d012
+26ab: a9 08     -         lda #$08                  //No scroll 
+26ad: 8d 16 d0  -         sta $d016
+26b0: a9 86     -         lda #<textirq1
+26b2: a2 26     -         ldx #>textirq1
+26b4: 8d 14 03  -         sta $314
+26b7: 8e 15 03  -         stx $315
+26ba: 20 c0 26  -         jsr scroll
+26bd: 4c 31 ea  -         jmp $ea31
+26c0: a5 02     - scroll: lda smooth
+26c2: 38        -         sec
+26c3: e9 02     -         sbc #$02                //scroll speed
+26c5: 29 07     -         and #$07 
+26c7: 85 02     -         sta smooth
+26c9: b0 31     -         bcs endscroll 
+26cb: a2 00     -         ldx #$00
+26cd: bd 99 5f  - wrapmessage:lda screenloc+1,x
+26d0: 9d 98 5f  -         sta screenloc,x
+26d3: e8        -         inx
+26d4: e0 28     -         cpx #$28
+26d6: d0 f5     -         bne wrapmessage
+26d8: ad bf 5f  - read:   lda screenloc+$27
+26db: c9 00     -         cmp #$00 
+26dd: d0 0d     -         bne nowrap 
+26df: a9 2c     -         lda #<intro_message
+26e1: a0 27     -         ldy #>intro_message
+26e3: 8d d9 26  -         sta read+1
+26e6: 8c da 26  -         sty read+2
+26e9: 4c d8 26  -         jmp read
+26ec: 8d bf 5f  - nowrap: sta screenloc+$27
+26ef: ee d9 26  -         inc read+1
+26f2: ad d9 26  -         lda read+1
+26f5: c9 00     -         cmp #$00
+26f7: d0 03     -         bne endscroll
+26f9: ee da 26  -         inc read+2
+26fc: 60        - endscroll:rts
+26fd: a2 18     - stop_music:ldx #$18        // 24 registers ($D400-$D418)
+26ff: a9 00     -         lda #$00
+2701: 9d 00 d4  - clear_sid:sta $d400,x     // Zero out the register
+2704: ca        -         dex
+2705: 10 fa     -         bpl clear_sid
+2707: 60        -         rts
+2708: ad ca 16  - display_high_score:lda high_score_bcd
+270b: 29 0f     -         and #$0f
+270d: 18        -         clc
+270e: 69 30     -         adc #$30                    // Convert to screen code ('0' = $30)
+2710: 8d d8 5f  -         sta VIC_SCREEN_MEMORY + 960 + 24   // Position 26 on bottom bar
+2713: ad cb 16  -         lda high_score_bcd + 1
+2716: 4a        -         lsr
+2717: 4a        -         lsr
+2718: 4a        -         lsr
+2719: 4a        -         lsr
+271a: 18        -         clc
+271b: 69 30     -         adc #$30                    // Convert to screen code
+271d: 8d d9 5f  -         sta VIC_SCREEN_MEMORY + 960 + 25   // Position 27
+2720: ad cb 16  -         lda high_score_bcd + 1
+2723: 29 0f     -         and #$0f
+2725: 18        -         clc
+2726: 69 30     -         adc #$30                    // Convert to screen code
+2728: 8d da 5f  -         sta VIC_SCREEN_MEMORY + 960 + 26   // Position 28
+272b: 60        -         rts
+272c: 20 0f 09 0c 20 10 01 0e 09 03 20 20 20 20 20 20  - intro_message:.text " oil panic       a fan tribute to nintendo       "
+273c: 20 01 20 06 01 0e 20 14 12 09 02 15 14 05 20 14 
+274c: 0f 20 0e 09 0e 14 05 0e 04 0f 20 20 20 20 20 20 
+275c: 20                                              
+275d: 10 12 05 13 13 20 01 0e 19 20 0b 05 19 20 14 0f 20 03 0f 0e 14 09 0e 15 05 20 14 0f 20 09 0e 06  -         .text "press any key to continue to info screen       coding, graphics and music"
+277d: 0f 20 13 03 12 05 05 0e 20 20 20 20 20 20 20 03 0f 04 09 0e 07 2c 20 07 12 01 10 08 09 03 13 20 
+279d: 01 0e 04 20 0d 15 13 09 03                                                                      
+27a6: 20 02 19 20 0d 05 14 05 13 05 16 20 32 30 32 36 20 20 20 20 20 20 20 14 08 09 13 20 09 13 20 01  -         .text " by metesev 2026       this is a non-profit fan project created for educational "
+27c6: 20 0e 0f 0e 2d 10 12 0f 06 09 14 20 06 01 0e 20 10 12 0f 0a 05 03 14 20 03 12 05 01 14 05 04 20 
+27e6: 06 0f 12 20 05 04 15 03 01 14 09 0f 0e 01 0c 20                                                 
+27f6: 10 15 12 10 0f 13 05 13 20 01 0e 04 20 14 0f 20 03 05 0c 05 02 12 01 14 05 20 14 08 05 20 08 09  -         .text "purposes and to celebrate the history of commodore 64 programming       all " 
+2816: 13 14 0f 12 19 20 0f 06 20 03 0f 0d 0d 0f 04 0f 12 05 20 36 34 20 10 12 0f 07 12 01 0d 0d 09 0e 
+2836: 07 20 20 20 20 20 20 20 01 0c 0c 20                                                             
+2842: 03 08 01 12 01 03 14 05 12 13 20 01 0e 04 20 0f 12 09 07 09 0e 01 0c 20 07 01 0d 05 20 04 05 13  -         .text "characters and original game designs are trademarks of nintendo co.ltd.       "
+2862: 09 07 0e 13 20 01 12 05 20 14 12 01 04 05 0d 01 12 0b 13 20 0f 06 20 0e 09 0e 14 05 0e 04 0f 20 
+2882: 03 0f 2e 0c 14 04 2e 20 20 20 20 20 20 20                                                       
+2890: 14 08 09 13 20 10 12 0f 0a 05 03 14 20 09 13 20 0e 0f 14 20 01 06 06 09 0c 09 01 14 05 04 20 17  -         .text "this project is not affiliated with or endorsed by nintendo       "
+28b0: 09 14 08 20 0f 12 20 05 0e 04 0f 12 13 05 04 20 02 19 20 0e 09 0e 14 05 0e 04 0f 20 20 20 20 20 
+28d0: 20 20                                                                                           
+28d2: 00        -         .byte $00
+28d3: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  - info_text:.text "                                        " 
+28e3: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+28f3: 20 20 20 20 20 20 20 20                         
+28fb: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        " 
+290b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+291b: 20 20 20 20 20 20 20 20                         
+2923: 20 20 20 20 20 20 20 0f 09 0c 20 10 01 0e 09 03  -         .text "       oil panic for commodore64        "
+2933: 20 06 0f 12 20 03 0f 0d 0d 0f 04 0f 12 05 36 34 
+2943: 20 20 20 20 20 20 20 20                         
+294b: 20 20 20 20 20 20 20 0f 12 09 07 09 0e 01 0c 20  -         .text "       original game by nintendo        "
+295b: 07 01 0d 05 20 02 19 20 0e 09 0e 14 05 0e 04 0f 
+296b: 20 20 20 20 20 20 20 20                         
+2973: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        " 
+2983: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2993: 20 20 20 20 20 20 20 20                         
+299b: 20 20 20 20 01 20 0c 05 01 0b 19 20 10 09 10 05  -         .text "    a leaky pipe is dripping oil.       "
+29ab: 20 09 13 20 04 12 09 10 10 09 0e 07 20 0f 09 0c 
+29bb: 2e 20 20 20 20 20 20 20                         
+29c3: 20 20 20 14 08 05 20 13 14 01 14 09 0f 0e 20 08  -         .text "   the station helper must collect the  "
+29d3: 05 0c 10 05 12 20 0d 15 13 14 20 03 0f 0c 0c 05 
+29e3: 03 14 20 14 08 05 20 20                         
+29eb: 20 20 20 20 04 12 0f 10 13 20 09 0e 20 01 20 02  -         .text "    drops in a bucket and dump them     "
+29fb: 15 03 0b 05 14 20 01 0e 04 20 04 15 0d 10 20 14 
+2a0b: 08 05 0d 20 20 20 20 20                         
+2a13: 20 20 20 20 20 20 09 0e 14 0f 20 08 09 13 20 02  -         .text "      into his boss's oil drum.         "
+2a23: 0f 13 13 27 13 20 0f 09 0c 20 04 12 15 0d 2e 20 
+2a33: 20 20 20 20 20 20 20 20                         
+2a3b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2a4b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2a5b: 20 20 20 20 20 20 20 20                         
+2a63: 20 20 20 20 20 20 10 12 05 13 13 20 06 31 20 14  -         .text "      press f1 to start the game        "
+2a73: 0f 20 13 14 01 12 14 20 14 08 05 20 07 01 0d 05 
+2a83: 20 20 20 20 20 20 20 20                         
+2a8b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2a9b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2aab: 20 20 20 20 20 20 20 20                         
+2ab3: 20 20 20 10 12 05 13 13 20 06 33 20 14 0f 20 03  -         .text "   press f3 to change game type (a/b)   "
+2ac3: 08 01 0e 07 05 20 07 01 0d 05 20 14 19 10 05 20 
+2ad3: 28 01 2f 02 29 20 20 20                         
+2adb: 20 20 20 20 20 20 20 20 04 05 06 01 15 0c 14 20  -         .text "        default game type :             "
+2aeb: 07 01 0d 05 20 14 19 10 05 20 3a 20 20 20 20 20 
+2afb: 20 20 20 20 20 20 20 20                         
+2b03: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2b13: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2b23: 20 20 20 20 20 20 20 20                         
+2b2b: 20 20 20 20 20 20 20 20 20 20 0b 05 19 13 20 06  -         .text "          keys for movement             "
+2b3b: 0f 12 20 0d 0f 16 05 0d 05 0e 14 20 20 20 20 20 
+2b4b: 20 20 20 20 20 20 20 20                         
+2b53: 20 20 20 20 20 20 20 20 20 3a 20 0c 05 06 14 20  -         .text "         : left and   : right           "    
+2b63: 01 0e 04 20 20 20 3a 20 12 09 07 08 14 20 20 20 
+2b73: 20 20 20 20 20 20 20 20                         
+2b7b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "        
+2b8b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2b9b: 20 20 20 20 20 20 20 20                         
+2ba3: 20 20 20 20 10 12 05 13 13 20 06 35 20 06 0f 12  -         .text "    press f5 for new key assignment     "
+2bb3: 20 0e 05 17 20 0b 05 19 20 01 13 13 09 07 0e 0d 
+2bc3: 05 0e 14 20 20 20 20 20                         
+2bcb: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2bdb: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2beb: 20 20 20 20 20 20 20 20                         
+2bf3: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2c03: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2c13: 20 20 20 20 20 20 20 20                         
+2c1b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2c2b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2c3b: 20 20 20 20 20 20 20 20                         
+2c43: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2c53: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2c63: 20 20 20 20 20 20 20 20                         
+2c6b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20  -         .text "                                        "
+2c7b: 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+2c8b: 20 20 20 20 20 20 20 20                         
+2c93: 20 20 20 20 20 20 20 20 20 20 20 20 08 09 07 08  -         .text "            high score :                "
+2ca3: 20 13 03 0f 12 05 20 3a 20 20 20 20 20 20 20 20 
+2cb3: 20 20 20 20 20 20 20 20                         
+2cbb: 20 20 20 20 20 20 20 10 12 05 13 13 20 0e 05 17  - new_left_key_text:.text "       press new key for left           "  
+2ccb: 20 0b 05 19 20 06 0f 12 20 0c 05 06 14 20 20 20 
+2cdb: 20 20 20 20 20 20 20 20                         
+2ce3: 20 20 20 20 20 20 20 10 12 05 13 13 20 0e 05 17  - new_right_key_text:.text "       press new key for right          "  
+2cf3: 20 0b 05 19 20 06 0f 12 20 12 09 07 08 14 20 20 
+2d03: 20 20 20 20 20 20 20 20                         
+2d0b: 20 20 20 20 20 20 20 20 0e 05 17 20 0b 05 19 13  - new_keys_assigned:.text "        new keys assigned               "
+2d1b: 20 01 13 13 09 07 0e 05 04 20 20 20 20 20 20 20 
+2d2b: 20 20 20 20 20 20 20 20                         
+
+[Intro Song]
+3000: 4c 7a 30 4c ad 30 4c 7e 30 4c a9 30 40 40 40 40 40 4a 4a 4a 4a 4a 4a 4a 4a 4a 4a 4a 08 05 00 00  -         .import c64 ".\assets\shikata-oilpanic.prg"
+3020: 4d 65 74 65 20 53 65 76 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 
+3040: 9d ee 33 bd dd 33 9d ed 33 60 4c 4b 32 b9 9f 35 85 23 a9 00 c9 02 90 02 f0 10 bd 1a 34 65 22 9d 
+3060: 1a 34 bd 1b 34 65 23 4c 48 32 bd 1a 34 e5 22 9d 1a 34 bd 1b 34 e5 23 4c 48 32 8d b0 30 60 8d 9f 
+3080: 30 8c a4 30 bd 2e 34 f0 10 98 dd 30 34 90 19 d0 08 ad 9f 30 dd 2f 34 90 0f a9 01 9d 2e 34 a9 00 
+30a0: 9d 2f 34 a9 00 9d 30 34 60 8d 39 31 60 a2 00 a0 00 30 30 8a a2 29 9d d8 33 ca 10 fa 8d 15 d4 8d 
+30c0: 32 31 8d e4 30 8e b0 30 aa 20 d3 30 a2 07 20 d3 30 a2 0e a9 05 9d 04 34 a9 01 9d 05 34 9d 07 34 
+30e0: 4c 35 33 a0 00 f0 45 a9 00 d0 23 b9 7c 35 f0 12 10 19 0a 8d 37 31 b9 8d 35 8d 32 31 b9 7d 35 d0 
+3100: 1f c8 b9 8d 35 8d 2d 31 4c 1d 31 8d e8 30 b9 8d 35 18 6d 2d 31 8d 2d 31 ce e8 30 d0 11 b9 7d 35 
+3120: c9 ff c8 98 90 03 b9 8d 35 8d e4 30 a9 00 8d 16 d4 a9 00 8d 17 d4 a9 00 09 0f 8d 18 d4 20 47 31 
+3140: a2 07 20 47 31 a2 0e de 05 34 f0 0b 10 06 bd 04 34 9d 05 34 4c ef 31 bc dd 33 b9 0c 30 8d e1 31 
+3160: 8d ed 31 bd db 33 d0 24 bc 02 34 b9 01 35 85 22 b9 04 35 85 23 bc d8 33 b1 22 c9 ff 90 06 c8 b1 
+3180: 22 a8 b1 22 9d 03 34 c8 98 9d d8 33 bc 07 34 b9 28 35 9d 31 34 bd ef 33 f0 4f 38 e9 60 9d 06 34 
+31a0: a9 00 9d ed 33 9d ef 33 b9 2c 35 9d f1 33 fe 08 34 b9 20 35 f0 08 9d f2 33 a9 00 9d f3 33 b9 24 
+31c0: 35 f0 08 8d e4 30 a9 00 8d e8 30 b9 1c 35 9d f0 33 b9 18 35 9d 2d 34 b9 14 35 9d 2c 34 bd de 33 
+31e0: 20 40 30 4c 0c 33 4c a8 33 bd de 33 20 40 30 bc f0 33 f0 27 b9 30 35 f0 07 c9 e0 b0 03 9d f1 33 
+3200: b9 31 35 c9 ff c8 98 90 03 b9 49 35 9d f0 33 b9 2f 35 c9 e0 b0 d0 b9 48 35 d0 1c bd 05 34 f0 2e 
+3220: bc ed 33 8c 53 30 b9 d3 33 8d 35 32 bc ee 33 b9 a1 35 85 22 4c 4a 30 10 05 7d 06 34 29 7f a8 b9 
+3240: 41 34 9d 1a 34 b9 a1 34 9d 1b 34 bd 05 34 dd 31 34 f0 4e bc f2 33 f0 46 1d db 33 f0 41 bd f3 33 
+3260: d0 14 b9 62 35 10 0c 9d 1d 34 b9 6f 35 9d 1c 34 4c 8f 32 9d f3 33 b9 6f 35 18 10 03 de 1d 34 7d 
+3280: 1c 34 9d 1c 34 90 03 fe 1d 34 de f3 33 d0 0f b9 63 35 c9 ff c8 98 90 03 b9 6f 35 9d f2 33 4c 0c 
+32a0: 33 bc 03 34 b9 07 35 85 22 b9 0e 35 85 23 bc db 33 b1 22 c9 40 90 18 c9 60 90 1e c9 c0 90 2e bd 
+32c0: dc 33 d0 02 b1 22 69 00 9d dc 33 f0 36 d0 3d 9d 07 34 c8 b1 22 c9 60 b0 14 c9 50 29 0f 9d dd 33 
+32e0: f0 06 c8 b1 22 9d de 33 b0 19 c8 b1 22 c9 bd f0 12 9d ef 33 a9 00 9d 2d 34 a9 00 9d 2c 34 a9 fe 
+3300: 9d 08 34 c8 b1 22 f0 01 98 9d db 33 bc 2e 34 d0 2e bd 2c 34 9d 05 d4 bd 2d 34 9d 06 d4 bd 1c 34 
+3320: 9d 02 d4 bd 1d 34 9d 03 d4 bd 1a 34 9d 00 d4 bd 1b 34 9d 01 d4 bd f1 33 3d 08 34 9d 04 d4 60 bd 
+3340: 2f 34 85 22 bd 30 34 85 23 a9 fe 9d 08 34 a9 00 9d f0 33 fe 2e 34 c0 02 f0 0a b0 26 9d 06 d4 9d 
+3360: 05 d4 90 c5 a8 b1 22 9d 05 d4 c8 b1 22 9d 06 d4 c8 b1 22 9d 02 d4 9d 03 d4 a9 09 9d f1 33 9d 04 
+3380: d4 60 b1 22 d0 05 9d 2e 34 f0 f0 a8 b9 c1 33 9d 00 d4 b9 21 34 9d 01 d4 bc 2e 34 b1 22 f0 e2 c9 
+33a0: 82 b0 de fe 2e 34 90 d3 29 0f 85 22 b9 48 35 85 23 a4 22 c0 05 b0 0e 8c 53 30 b9 d3 33 8d 35 32 
+33c0: a4 23 4c 2f 32 b9 0c 30 8d ce 33 a5 23 20 40 30 4c 4b 32 4a 4d 4d 4d 4d 00 00 00 00 00 00 00 00 
+33e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+3400: 00 00 00 00 00 00 00 01 fe 01 00 00 00 00 01 fe 02 00 00 00 00 01 fe 00 00 00 00 00 00 00 00 00 
+3420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+3440: 00 17 27 39 4b 5f 74 8a a1 ba d4 f0 0e 2d 4e 71 96 be e8 14 43 74 a9 e1 1c 5a 9c e2 2d 7c cf 28 
+3460: 85 e8 52 c1 37 b4 39 c5 5a f7 9e 4f 0a d1 a3 82 6e 68 71 8a b3 ee 3c 9e 15 a2 46 04 dc d0 e2 14 
+3480: 67 dd 79 3c 29 44 8d 08 b8 a1 c5 28 cd ba f1 78 53 87 1a 10 71 42 89 4f 9b 74 e2 f0 a6 0e 33 20 
+34a0: ff 01 01 01 01 01 01 01 01 01 01 01 02 02 02 02 02 02 02 03 03 03 03 03 04 04 04 04 05 05 05 06 
+34c0: 06 06 07 07 08 08 09 09 0a 0a 0b 0c 0d 0d 0e 0f 10 11 12 13 14 15 17 18 1a 1b 1d 1f 20 22 24 27 
+34e0: 29 2b 2e 31 34 37 3a 3e 41 45 49 4e 52 57 5c 62 68 6e 75 7c 83 8b 93 9c a5 af b9 c4 d0 dd ea f8 
+3500: ff a3 ad b7 35 35 35 c1 c4 0a 18 24 66 8e 35 35 36 36 36 36 36 08 49 3a 03 00 00 00 9b 01 08 0b 
+3520: 17 01 03 09 0c 01 04 0d 00 01 02 02 02 09 09 09 09 81 41 41 81 80 80 ff 81 41 ff 81 41 41 f1 f1 
+3540: f1 f1 f1 f1 f1 f1 ff 11 10 ff 48 28 24 4c 44 40 05 5f 80 09 5f 80 80 00 00 00 00 01 01 01 01 0c 
+3560: 80 80 00 88 ff 81 5f 5f ff 10 ff 84 11 ff 80 ff 00 00 28 5f 5f 04 43 00 41 41 07 80 00 88 00 ff 
+3580: 88 00 00 00 00 00 00 00 ff 88 00 7f 00 ff 81 c0 00 f1 6c 58 44 30 24 18 08 0b f1 a8 fc 00 10 00 
+35a0: 00 00 00 00 06 01 01 01 01 01 01 ff 00 00 00 02 03 02 03 05 05 ff 00 04 04 04 04 04 04 04 04 ff 
+35c0: 00 bd c1 00 02 75 fd 01 7c fe 02 75 bd 75 75 bd 01 7c bd 02 70 bd 71 fd 01 7c fe 02 71 bd 71 71 
+35e0: bd 01 7c bd 02 70 bd 6e fd 01 7c fe 02 6e bd 6e 6e bd 01 7c bd 02 6e bd 70 fd 01 7c fe 02 70 bd 
+3600: 70 70 bd 01 7c bd 02 74 bd 00 03 99 f1 9c f1 9e f5 9c fd 9b f9 97 f9 00 03 99 f1 9c f1 9e f5 a1 
+3620: fd a0 f1 00 04 8d 90 94 90 8d 90 94 90 8d 90 94 90 8d 90 94 90 89 8d 90 8d 89 8d 90 8d 89 8d 90 
+3640: 8d 89 8d 90 8d 86 89 8d 89 86 89 8d 89 86 89 8d 89 86 89 8d 89 88 8c 8f 8c 88 8c 8f 8c 88 8c 8f 
+3660: 8c 8f 8c 88 8c 00 bd fd 03 90 92 bd 94 bd 95 bd 94 f8 90 92 bd 94 bd 95 bd 94 f8 90 92 bd 94 bd 
+3680: 95 bd 94 f8 90 92 bd 97 bd 95 bd 94 fc 00 02 75 fa 75 bd 75 75 fd 70 bd 71 fa 71 bd 71 71 fd 70 
+36a0: bd 6e fa 6e bd 6e 6e fd 6e bd 70 fa 70 bd 70 70 fd 74 bd 00                                     
+
+[Character Set Data]
+4000: 00 00 00 00 00 00 00 00 00 3c 66 7e 66 66 00 00 00 7c 66 7c 66 7c 00 00 00 3c 66 60 66 3c 00 00  -         .import binary ".\assets\op_intro screen - Chars_alt.bin"
+4020: 00 7c 66 66 66 7c 00 00 00 7e 60 78 60 7e 00 00 00 7e 60 78 60 60 00 00 00 3c 66 60 66 3e 06 00 
+4040: 00 66 66 7e 66 66 00 00 00 3c 18 18 18 3c 00 00 00 06 06 66 66 3c 00 00 00 66 6c 78 6c 66 00 00 
+4060: 00 60 60 60 60 7e 00 00 00 66 7e 66 66 66 00 00 00 66 76 7e 6e 66 00 00 00 3c 66 66 66 3c 00 00 
+4080: 00 7c 66 7c 60 60 00 00 00 3c 66 66 6c 3e 00 00 00 7c 66 7c 6c 66 00 00 00 3e 60 3c 06 7c 00 00 
+40a0: 00 7e 18 18 18 18 00 00 00 66 66 66 66 3c 00 00 00 66 66 66 3c 18 00 00 00 66 66 66 7e 66 00 00 
+40c0: 00 66 3c 18 3c 66 00 00 00 66 66 3c 18 18 00 00 00 7e 0c 18 30 7e 00 00 00 00 00 00 00 00 00 00 
+40e0: 00 18 3c 5a 18 18 00 00 00 18 18 5a 3c 18 00 00 00 10 08 7c 7c 08 10 00 00 10 20 7c 7c 20 10 00 
+4100: 00 00 00 00 00 00 00 00 18 18 18 18 00 18 00 00 00 36 6c 00 00 00 00 00 00 00 00 00 00 00 00 00 
+4120: 00 38 48 30 32 4c 3a 00 00 db 9a da 52 d3 00 00 00 00 00 00 00 00 00 00 00 18 30 00 00 00 00 00 
+4140: 0c 18 18 18 18 18 0c 00 30 18 18 18 18 18 30 00 00 00 00 00 00 00 00 00 00 18 18 7e 18 18 00 00 
+4160: 00 00 00 00 00 30 60 00 00 00 00 3c 00 00 00 00 00 00 00 00 00 30 00 00 00 02 04 08 10 20 40 00 
+4180: 00 3c 66 66 66 3c 00 00 00 18 38 18 18 18 00 00 00 7c 06 3c 60 7e 00 00 00 7c 06 1c 06 7c 00 00 
+41a0: 00 66 66 7e 06 06 00 00 00 7e 60 7c 06 7c 00 00 00 3c 60 7c 66 3c 00 00 00 7e 0c 18 18 18 00 00 
+41c0: 00 3c 66 3c 66 3c 00 00 00 3c 66 3e 06 3c 00 00 00 00 10 10 00 10 10 00 7e 81 9d a1 a1 9d 81 7e 
+41e0: ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01 00 00 00 00 00 00 00 00 01 
+4200: 00 00 00 00 00 00 01 01 00 00 00 00 07 07 07 ff 00 00 00 00 07 07 07 07 00 80 00 00 00 00 00 00 
+4220: 00 00 00 00 00 00 00 80 80 00 00 00 00 00 00 00 01 00 00 00 80 c0 e0 f0 00 00 80 e0 e0 c0 80 00 
+4240: 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03 03 0f 00 00 00 00 0c 0f ff ff 
+4260: 00 00 00 00 00 00 c0 f0 00 00 00 00 30 f0 ff ff 00 00 00 00 00 80 c0 c0 0f 0f 3f 3f 3c fc fc f0 
+4280: ff ff ff 3f 03 00 00 00 fc ff ff ff ff ff 3f 03 00 00 c0 f0 fc fc fc fc 00 00 00 00 30 fc fc ff 
+42a0: 3f 3f 3f 0c 00 00 00 00 f0 f0 f0 fc fc 3c 3f 3f 00 03 03 03 00 00 00 00 f0 fc ff ff ff 3f 3f 3f 
+42c0: 00 00 c0 fc ff ff ff ff 00 00 00 00 c0 fc ff ff ff 3f 0f 3f 3f 3c fc fc 00 03 03 00 00 00 00 00 
+42e0: ff fc f0 f0 fc fc 3c 3f 00 00 00 00 03 0f ff ff 00 00 03 3f ff ff ff ff 0f 3f ff ff ff fc fc fc 
+4300: 00 00 c0 c0 00 00 00 00 3f 00 00 00 00 00 00 00 ff ff 03 00 00 00 00 00 ff ff ff 0f 00 00 00 00 
+4320: fc f0 00 00 00 00 00 00 3f 3f 00 00 00 00 00 00 ff ff ff fc 00 00 00 00 ff ff f0 00 00 00 00 00 
+4340: fc c0 00 00 00 00 00 00 00 00 00 3f 3f 3f 3f 3f 00 00 00 00 00 00 00 ff 00 00 00 00 c0 c0 c0 c0 
+4360: 00 00 00 00 c0 c0 c0 ff 00 00 00 f0 fc fc fc fc 3f 3f 3f 3f 3f 0f 0f 0f ff ff ff ff ff ff c0 00 
+4380: ff ff ff ff ff f0 00 00 ff ff ff ff f3 03 03 00 c0 c0 c0 c0 c0 c0 c0 00 03 0f 0f 0f 0f 0f 03 00 
+43a0: ff ff ff ff ff c0 00 00 ff ff ff ff ff 0f 00 00 ff ff ff ff ff ff 0f 00 fc f0 f0 f0 f0 f0 f0 f0 
+43c0: 0f 0f 0f 00 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 00 00 0c ff ff 00 00 00 00 00 f0 fc ff 
+43e0: 03 03 03 00 00 00 00 00 f0 f0 f0 00 00 00 00 00 00 00 00 00 03 3f 3f 3f 00 00 0f ff ff ff ff ff 
+4400: 3f ff ff ff ff ff fc f0 ff ff ff fc c0 00 00 00 03 03 03 00 00 00 00 ff ff ff ff 3f 0f 03 0f ff 
+4420: fc ff ff ff ff ff ff ff 00 00 f0 fc ff ff ff ff 00 00 00 00 c0 f0 fc fc 3f 0f 0f 0f 03 03 03 00 
+4440: ff fc f0 c0 c0 f0 f0 fc ff ff ff ff 3f 3f 0f 03 ff ff ff ff ff ff ff ff ff ff ff ff c3 c0 c0 f0 
+4460: ff ff ff cf 03 00 00 00 fc f0 f0 f0 c0 c0 00 00 fc 3f 3f 0f 0f 03 03 00 00 00 00 c0 c0 f0 f0 fc 
+4480: 00 00 00 00 00 03 03 03 00 00 00 00 00 f0 ff ff 00 00 00 00 00 0c fc fc 00 00 03 03 00 03 03 03 
+44a0: 30 fc ff ff ff ff ff f0 00 00 c0 ff ff ff 3f 3f ff ff 3f 0f 0f 03 00 00 f0 30 00 00 00 00 00 00 
+44c0: 0f 0f 0f 0f 0f 0f 0f 0f ff f0 f0 f0 f0 f0 f0 f0 ff 3f 0f 0f 0f 0f 0f 0f c0 c0 f0 f0 f0 f0 f0 c0 
+44e0: 03 03 0f 0f 0f 0f 0f 0f c0 c0 f3 ff ff ff fc fc 3f ff ff ff f3 03 00 00 fc fc ff ff ff ff ff ff 
+4500: 00 00 00 c0 c0 f0 f0 f0 3f 0c 00 00 00 00 00 00 3f 3f 3f 3f 3f 3f 3f ff ff ff ff ff f0 f0 f0 f0 
+4520: ff ff ff f0 00 00 00 00 0f 03 03 03 03 00 00 00 00 00 00 00 c0 c0 c0 c0 3f 3f 0f 0c 00 00 00 00 
+4540: f0 c0 00 00 00 00 00 00 ff ff ff ff ff 00 00 00 f0 c0 c0 c0 c0 c0 00 00 ff fc 00 00 00 00 00 00 
+4560: ff ff 7f 00 00 00 00 00 00 00 00 00 00 00 01 02 00 00 00 00 00 00 01 02 00 00 00 00 00 00 40 90 
+4580: 00 00 00 00 00 00 00 00 7f 3f 3f 3f 3f 1f 1f 3f c0 c0 c0 80 80 ff ff ff 00 00 00 00 00 f0 fe ff 
+45a0: 00 00 00 00 00 00 00 80 0e 0e 0e 0e 0f 0f 07 07 7f 7f 7f 7f 7f 7f 3f 3f ff ff ff ff ff ff ff ff 
+45c0: fc fc fc fc fc fc f9 f9 e0 e0 e0 c0 c0 c0 c0 c0 01 03 07 07 07 07 03 07 f8 fd ff ff ff ff ff ff 
+45e0: 7f fd fc f8 10 00 00 00 ff ff ff 7f 7f 7f 7f ff 80 c0 c0 e0 f0 f0 f8 fc 07 07 07 07 07 07 03 03 
+4600: 00 00 3f 3f 3f 3f bf bf 00 00 ff ff ff ff ff ff 01 01 f9 f8 f8 f8 f9 f9 c0 80 80 00 00 e0 f0 f0 
+4620: 1f 1f 3f 1f 0f 03 00 00 ff ff ff ff ff ff f9 00 00 c3 ff ff ff ff ff 0f fc fe fe fe fe fe fe fe 
+4640: 03 03 03 03 03 03 03 03 bf 9f 9f 9f 80 80 9f 9f ff ff ff ff 00 00 ff ff f9 f9 f1 f1 00 00 f0 f0 
+4660: f0 f0 f8 fe ff 7f 7f 7f 00 00 00 00 00 00 80 80 00 00 00 00 00 38 7c 7e 03 01 01 00 00 00 00 00 
+4680: fe fe fe fe fe fe fc fc 01 01 01 01 01 01 01 01 df df df df cf cf c7 c0 ff ff ff ff ff ff ff 00 
+46a0: f0 f0 f1 e3 e7 e7 c3 00 7f 7f ff ff ff ff ff 3f 80 00 80 80 80 80 c0 c0 7e 7e 7f 3f 1f 0f 07 03 
+46c0: 00 01 01 c7 ff ff ff ff f8 f0 e0 c0 00 00 00 00 01 01 01 00 00 00 00 00 c0 ff ff ff 7f 00 00 00 
+46e0: 00 f8 f0 f1 e3 03 00 00 00 00 ff ff ff ff 7f 3f 00 00 03 cf ff ff ff ff 1f 0f 07 87 83 81 80 00 
+4700: e0 f0 f8 fc ff ff ff 7f 00 00 00 0f ff ff ff ff ff ff ff fc f8 fc fc fc ff ff 7f 03 00 00 00 00 
+4720: ff ff fe fc f0 00 00 00 00 00 00 00 00 04 1f 3f 3f 1f 0f 03 00 00 00 80 ff ff ff ff 03 00 00 00 
+4740: 80 c0 f8 f8 f0 f0 01 01 3f 1f 3f 7f ff ff ff ff fc f8 f8 f0 e0 c0 80 00 7f 7f 7f ff ff 7f 7f 7f 
+4760: c0 e0 f0 f0 f9 ff ff ff 00 00 00 3f ff ff ff ff 03 07 07 ff ff ff ff ff 00 00 00 00 00 80 80 80 
+4780: 7f 3f 3f 1f 0f 07 03 01 ff ff ff ff f8 f0 c0 00 ff ff ff ff 0f 01 00 00 ff ff ff ff ff ff ff 0f 
+47a0: c0 f0 f8 fc fe fe fe fe 01 01 01 00 00 00 00 00 fe fe fc f8 00 00 00 00 00 00 00 00 00 01 01 03 
+47c0: 3f 7f 7f ff ff ff ff ff fc fc f8 f0 e0 e0 ff ff 00 00 00 00 00 00 00 c0 03 07 07 07 07 03 01 00 
+47e0: ff ff ff ff ff fe f8 00 ff ff ff ff ff ff 7f 1f e0 f0 f0 f8 f8 f0 e0 00 00 00 00 00 00 00 00 f0 
+
+[Character Set Attributes]
+4800: 0f 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c  -         .import binary ".\assets\op_intro screen_alt - CharAttribs_L1_alt.bin"
+4820: 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0b 02 02 
+4840: 02 02 02 02 02 02 02 02 02 03 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 
+4860: 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 
+4880: 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 
+48a0: 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 0b 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 
+48c0: 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 
+48e0: 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 0c 
+
+[Sprite data]
+4c00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -         .import binary ".\assets\oil panic sprites.bin"
+4c20: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+4c40: 00 00 00 00 00 00 00 00 00 e0 00 00 f8 00 00 fc 00 00 ff 00 00 ff c0 00 ff fc 40 3f fe c0 0f ff 
+4c60: c0 03 f3 80 00 e1 80 01 e1 00 01 c0 00 01 e0 00 00 f0 00 00 70 00 00 78 00 00 fc 00 00 00 00 00 
+4c80: 00 00 c0 00 00 e0 20 21 f0 20 27 78 20 26 5c 20 23 9c 20 01 fc 20 20 7c 20 22 78 20 11 f0 20 38 
+4ca0: c0 3a 8f c0 03 e7 80 00 0f 80 00 1f 80 00 3f c4 00 70 ec 00 60 7c 01 e0 38 03 f0 20 00 00 00 00 
+4cc0: 00 00 30 00 00 70 20 21 f0 20 27 f8 20 27 28 20 23 2e 20 07 fe 20 26 6c 20 22 78 20 11 f0 20 38 
+4ce0: c0 3a 8f c0 03 e7 80 00 0f 00 00 1f 80 00 3f c0 00 60 c0 00 60 c0 01 e0 f0 03 f0 f8 00 00 00 00 
+4d00: 00 00 c0 00 00 e0 20 21 f0 20 27 b8 20 27 3c 20 23 fc 20 01 fc 20 20 3c 20 22 38 20 11 f0 20 38 
+4d20: c0 3a 8f c0 03 e7 80 00 0f 80 02 1f 80 03 3f c0 03 e0 c0 03 c0 c0 03 00 f0 02 00 f8 00 00 00 00 
+4d40: 00 00 00 00 00 00 00 00 00 00 00 07 00 00 1f 00 00 3f 00 00 ff 00 03 ff 02 3f ff 03 7f fc 03 ff 
+4d60: f0 01 cf c0 01 87 00 00 87 80 00 03 80 00 07 80 00 0f 00 00 0e 00 00 1e 00 00 3f 00 00 00 00 00 
+4d80: 00 00 c0 00 00 e0 20 21 f0 20 27 78 20 26 5c 20 23 9c 20 01 fc 20 20 7c 2f a2 78 2f 91 f0 20 38 
+4da0: c0 3a 8f c0 03 e7 80 00 0f 80 00 1f 80 00 3f c4 00 70 ec 00 60 7c 01 e0 38 03 f0 20 00 00 00 00 
+4dc0: 00 00 30 00 00 70 20 21 f0 20 27 f8 20 27 28 20 23 2e 20 07 fe 20 26 6c 2f a2 78 2f 91 f0 20 38 
+4de0: c0 3a 8f c0 03 e7 80 00 0f 00 00 1f 80 00 3f c0 00 60 c0 00 60 c0 01 e0 f0 03 f0 f8 00 00 00 00 
+4e00: 00 00 c0 00 00 e0 20 21 f0 20 27 b8 20 27 3c 20 23 fc 20 01 fc 20 20 3c 2f a2 38 2f 91 f0 20 38 
+4e20: c0 3a 8f c0 03 e7 80 00 0f 80 02 1f 80 03 3f c0 03 e0 c0 03 c0 c0 03 00 f0 02 00 f8 00 00 00 00 
+4e40: 00 00 c0 00 00 e0 20 21 f0 20 27 78 20 26 5c 2f a3 9c 2f 81 fc 20 20 7c 2f a2 78 2f 91 f0 20 38 
+4e60: c0 3a 8f c0 03 e7 80 00 0f 00 00 1f 00 00 3f c4 00 70 ec 00 60 7c 01 e0 38 03 f0 20 00 00 00 00 
+4e80: 00 00 30 00 00 70 20 21 f0 20 27 f8 20 27 28 2f a3 2e 2f 87 fe 20 26 6c 2f a2 78 2f 91 f0 20 38 
+4ea0: c0 3a 8f c0 03 e7 80 00 0f 00 00 1f 80 00 3f c0 00 60 c0 00 60 c0 01 e0 f0 03 f0 f8 00 00 00 00 
+4ec0: 00 00 c0 00 00 e0 20 21 f0 20 27 b8 20 27 3c 2f a3 fc 2f 81 fc 20 20 3c 2f a2 38 2f 91 f0 20 38 
+4ee0: c0 3a 8f c0 03 e7 80 00 0f 80 02 1f 80 03 3f c0 03 e0 c0 03 c0 c0 03 00 f0 02 00 f8 00 00 00 00 
+4f00: 00 00 c0 00 00 e0 2f a1 f0 2f a7 78 20 26 5c 2f a3 9c 2f 81 fc 20 20 7c 2f a2 78 2f 91 f0 20 38 
+4f20: c0 3a 8f c0 03 e7 80 00 0f 80 00 1f 80 00 3f c4 00 70 ec 00 60 7c 01 e0 38 03 f0 20 00 00 00 00 
+4f40: 00 00 30 00 00 70 2f a1 f0 2f a7 f8 20 27 28 2f a3 2e 2f 87 fe 20 26 6c 2f a2 78 2f 91 f0 20 38 
+4f60: c0 3a 8f c0 03 e7 80 00 0f 00 00 1f 80 00 3f c0 00 60 c0 00 60 c0 01 e0 f0 03 f0 f8 00 00 00 00 
+4f80: 00 00 c0 00 00 e0 2f a1 f0 2f a7 b8 20 27 3c 2f a3 fc 2f 81 fc 20 20 3c 2f a2 38 2f 91 f0 20 38 
+4fa0: c0 3a 8f c0 03 e7 80 00 0f 80 02 1f 80 03 3f c0 03 e0 c0 03 c0 c0 03 00 f0 02 00 f8 00 00 00 00 
+4fc0: 00 00 00 00 00 00 00 00 00 00 7c 00 00 fe 00 00 7c 00 00 5c 00 00 6c 00 00 38 00 00 00 00 00 00 
+4fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5000: 00 00 00 00 10 00 00 10 00 00 38 00 00 38 00 00 7c 00 00 5c 00 00 6c 00 00 38 00 00 00 00 00 00 
+5020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5040: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5060: 00 00 00 00 00 00 00 00 00 20 00 04 40 00 22 c0 0d 12 c0 05 93 80 01 de 00 00 fc 00 00 00 00 00 
+5080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 12 40 00 22 40 04 a7 80 04 e4 
+50a0: 00 07 88 00 03 00 00 00 00 20 00 04 40 00 22 c0 0d 12 c0 05 93 80 01 de 00 00 fc 00 00 00 00 00 
+50c0: 00 10 00 00 13 00 07 b3 80 09 ec 80 09 80 80 10 80 00 00 00 00 00 12 40 00 22 40 04 a7 80 04 e4 
+50e0: 00 07 88 00 03 00 00 00 00 20 00 04 40 00 22 c0 0d 12 c0 05 93 80 01 de 00 00 fc 00 00 00 00 00 
+5100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5120: 00 00 00 00 00 00 00 00 00 00 00 00 00 12 20 80 09 30 80 0b 19 80 0b 19 80 03 ff 00 00 e0 00 00 
+5140: 00 00 00 00 00 00 00 00 00 00 02 00 00 02 00 00 04 00 00 04 00 01 21 00 01 11 00 07 11 80 07 73 
+5160: 80 01 cb 00 01 06 00 00 00 00 00 00 00 12 20 80 09 30 80 0b 19 80 0b 19 80 03 ff 00 00 e0 00 00 
+5180: 00 10 00 08 20 00 09 60 00 0d e2 00 17 42 00 02 04 00 00 04 00 01 21 00 01 11 00 07 11 80 07 73 
+51a0: 80 01 cb 00 01 06 00 00 00 00 00 00 00 12 20 80 09 30 80 0b 19 80 0b 19 80 03 ff 00 00 e0 00 00 
+51c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+51e0: 00 00 00 00 00 00 00 00 02 00 00 21 00 00 11 90 01 09 b0 01 83 e0 01 92 00 00 f0 00 00 60 00 00 
+5200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 48 40 00 44 c0 02 46 c0 06 65 
+5220: 80 06 58 00 03 80 00 00 02 00 00 21 00 00 11 90 01 09 b0 01 83 e0 01 92 00 00 f0 00 00 60 00 00 
+5240: 00 00 00 00 20 00 01 20 00 09 10 00 09 08 00 0a 00 00 06 00 00 00 48 40 00 44 c0 02 46 c0 06 65 
+5260: 80 06 58 00 03 80 00 00 02 00 00 21 00 00 11 90 01 09 b0 01 83 e0 01 92 00 00 f0 00 00 60 00 00 
+5280: 00 00 04 00 00 2c 00 00 1c 00 00 1c 00 00 3e 00 00 32 00 00 22 00 00 00 00 00 00 06 d3 30 05 54 
+52a0: 40 05 52 20 04 51 10 04 56 60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+52c0: 00 08 04 00 58 2c 00 38 1c 00 38 1c 00 7c 3e 00 64 32 00 44 22 00 00 00 00 00 00 06 d3 30 05 54 
+52e0: 40 05 52 20 04 51 10 04 56 60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5300: 10 08 04 b0 58 2c 70 38 1c 78 38 1c f8 7c 3e c8 64 32 88 44 22 00 00 00 00 00 00 06 d3 30 05 54 
+5320: 40 05 52 20 04 51 10 04 56 60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5340: 00 00 00 00 00 18 00 00 24 00 00 6e 00 00 5f 00 00 4f 00 00 46 00 00 00 00 00 00 06 d3 30 05 54 
+5360: 40 05 52 20 04 51 10 04 56 60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5380: 00 00 00 00 18 18 00 24 24 00 6e 6e 00 5f 5f 00 4f 4f 00 46 46 00 00 00 00 00 00 06 d3 30 05 54 
+53a0: 40 05 52 20 04 51 10 04 56 60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+53c0: 00 00 00 18 18 18 64 24 24 6e 6e 6e 5f 5f 5f 4f 4f 4f 46 46 46 00 00 00 00 00 00 06 d3 30 05 54 
+53e0: 40 05 52 20 04 51 10 04 56 60 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5400: 00 00 7e 00 00 7e 01 b8 7e 01 fc 7e 00 ac 7e 01 fe fe 01 fe 7f 00 0c 4f 00 7f 1a 00 07 c0 00 03 
+5420: e0 00 00 fa 00 01 fe 00 01 8e 00 01 84 00 07 80 00 0f c0 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5440: 00 00 00 00 00 00 01 b8 00 01 fc 00 00 ac 00 01 fe 00 01 fe 00 00 0c 00 00 7f 00 00 07 c0 00 33 
+5460: e0 00 e4 fa 01 fd fe 03 f9 8e 04 f1 84 00 67 80 00 4f c0 00 80 00 00 00 00 00 00 00 00 00 00 00 
+5480: 7e 00 00 7e 00 00 7e 1d 80 7e 3f 80 7e 35 00 7f 7f 80 fe 7f 80 f2 30 00 58 fe 00 03 e0 00 07 c0 
+54a0: 00 5f 00 00 7f 80 00 71 80 00 21 80 00 01 e0 00 03 f0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+54c0: 00 00 00 00 00 00 00 1d 80 00 3f 80 00 35 00 00 7f 80 00 7f 80 00 30 00 00 fe 00 03 e0 00 07 cc 
+54e0: 00 5f 27 00 7f bf 80 71 9f c0 21 8f 20 01 e6 00 03 f2 00 00 01 00 00 00 00 00 00 00 00 00 00 00 
+5500: 00 00 00 00 00 00 00 00 f0 00 01 f8 1e 07 7c f6 06 5c ce 03 9c ff 41 fc 73 20 7c 6f 22 78 7f 91 
+5520: f0 39 b8 c0 27 8f c0 3e 07 80 18 ff 00 01 9f 00 07 3f c4 00 70 ec 00 60 7c 01 e0 38 03 f0 20 00 
+5540: 1e 00 00 1b c0 00 1c c0 00 3f c1 f0 33 83 d8 3d 87 4c 7f 87 3c 67 27 f8 79 27 80 1f 23 80 06 51 
+5560: e0 00 09 80 02 8f 80 01 e7 80 00 1f 00 00 1f 00 02 3f 80 03 f1 c0 01 c0 c0 00 40 f0 00 01 f8 00 
+5580: 00 00 78 00 03 d8 00 03 38 0f 83 fc 1b c1 cc 32 e1 bc 3c e1 fe 1f e4 e6 01 e4 9e 01 c4 f8 07 8a 
+55a0: 60 01 90 00 01 f1 40 01 e7 80 00 f8 00 00 f8 00 01 fc 40 03 8f c0 03 03 80 0f 02 00 1f 80 00 00 
+55c0: 00 00 00 00 00 00 07 80 00 0f c0 00 1e e0 78 3a 60 6f 39 c0 73 3f 82 ff 3e 04 ce 1e 44 f6 0f 89 
+55e0: fe 03 1d 9c 03 f1 e4 01 e0 7c 00 ff 18 00 f9 80 23 fc e0 37 0e 00 3e 06 00 1c 07 80 04 0f c0 00 
+5600: 07 80 00 07 fc 00 03 fe 00 03 fe 00 03 3f 80 07 bf c0 0f fe e0 03 fe e0 03 fc e0 21 f8 e0 10 30 
+5620: 70 1f fc 00 0c 73 00 08 f9 e0 01 fc c0 03 fe 00 07 ff 00 00 c6 00 00 c6 00 01 c3 00 03 a3 80 00 
+5640: 00 7e 00 00 ff 00 00 ef 00 03 cf 80 01 ff e0 00 7f f0 00 3f 70 03 3f 30 01 fe 30 00 fc 38 00 30 
+5660: 1c 03 fe 00 07 77 00 0c f9 80 0f fd 80 07 ff 00 07 ff 00 23 8c 00 37 1c 00 1e 1e 00 0c 17 00 00 
+5680: 00 1c 00 00 3f 00 00 77 80 01 e7 c0 00 ff c0 00 ff f0 10 47 f0 11 33 d8 18 9f 98 1c 7f 1d 07 1c 
+56a0: 0e 01 f8 00 08 ff 80 18 78 c0 1f fd b0 3f fe 00 01 ff 80 00 7f 80 00 0f f8 00 00 70 00 00 60 00 
+56c0: 01 e7 80 03 ff c0 03 ff c0 03 ff c0 0f ff f0 01 a5 80 07 99 e0 07 ff e0 03 bd c0 00 c3 00 00 7e 
+56e0: 00 00 18 00 01 ff 80 03 f7 c0 07 66 e0 0e 6e 70 1c ff 38 04 ff 20 00 66 00 01 e7 80 07 e7 e0 00 
+5700: 00 78 00 00 fc 80 03 ff 00 03 ee 00 1f e7 80 0f ff 00 03 fe 00 03 e0 00 01 f2 00 00 7c 30 00 18 
+5720: 60 00 7c c0 00 f6 00 01 fb 00 01 bb 00 03 bf 00 01 ff 00 0c fe 00 07 e7 00 03 c7 80 01 8f e0 00 
+5740: 00 78 00 00 fc 80 03 ff 00 03 ee 00 1f e7 80 0f ff 00 03 fe 00 03 e0 00 01 f2 00 00 7c 00 00 18 
+5760: 00 00 7c 00 00 f6 00 01 fb 40 01 bb 60 03 bf 30 01 ff 10 0c fe 00 07 e7 00 03 c7 80 01 8f e0 00 
+5780: 00 20 00 00 20 00 00 28 00 03 bb 00 04 7c 80 00 18 00 07 01 c0 1e 00 f0 78 00 3c e0 00 0e a0 00 
+57a0: 05 40 00 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+57c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+57e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 10 00 10 1c 00 70 07 db c0 01 e7 80 00 
+5800: 00 00 00 00 00 70 00 00 88 00 01 8c 00 02 02 00 02 52 03 01 dc 04 80 50 0c 80 00 11 c0 00 10 00 
+5820: 00 11 c0 00 0c 80 00 04 80 00 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5840: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 e4 db 84 8a aa 0a 8a aa 0a ae ab 
+5860: 8e aa aa 0a aa 8a 0a ea 8b 8a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5880: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 e4 db 8c 8a aa 0a 8a aa 0a ae ab 
+58a0: 8c aa aa 0a aa 8a 0a ea 8b 8c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+58c0: 00 00 00 ff ff ff 80 00 01 80 00 01 80 00 01 80 00 01 80 00 01 80 00 01 80 00 01 80 00 01 80 00 
+58e0: 01 80 00 01 80 00 01 80 00 01 80 00 01 80 00 01 80 00 01 80 00 01 ff ff ff 00 00 00 00 00 00 00 
+5900: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5920: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5940: 00 00 00 00 00 00 00 00 00 00 02 00 00 0e 00 00 14 00 00 2c 00 00 78 00 00 70 00 00 20 00 07 07 
+5960: 00 08 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+5980: 00 00 00 00 00 00 00 00 00 00 40 00 00 70 00 00 28 00 00 34 00 00 1e 00 00 0e 00 00 04 00 00 e0 
+59a0: e0 01 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+59c0: ff ff ff 80 00 01 80 00 01 8c 45 19 90 a7 21 90 a7 21 94 e7 39 94 a5 21 94 a5 21 88 a5 19 80 00 
+59e0: 01 88 a3 11 94 a4 29 94 a4 29 94 a7 31 94 a4 31 94 e4 29 88 43 29 80 00 01 80 00 01 ff ff ff 00 
+5a00: 00 00 00 00 00 00 14 47 28 14 44 28 14 44 28 1c 45 38 14 45 28 14 45 28 14 47 28 00 00 00 00 00 
+5a20: 00 00 00 00 e7 39 ce 84 29 48 84 29 48 e4 29 ce 24 29 88 24 29 48 e7 39 4e 00 00 00 00 00 00 00 
+
+[Bitmap screen]
+6000: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff  - screenloc--104:.import c64 ".\assets\oilpanic3.kla"
+6020: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6040: 5a 5a 5a 5a 5a 5a 5a 5a 55 55 ba ae af ab ab ab aa aa 40 c0 d0 d0 d4 d4 55 55 00 00 00 00 00 20 
+6060: 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 0a 
+6080: 55 55 00 00 00 00 00 80 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 
+60a0: 55 55 00 00 00 00 00 02 55 55 00 00 00 00 00 20 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 
+60c0: 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 0a 55 55 00 00 00 00 00 80 55 55 00 00 00 00 00 08 
+60e0: aa aa 01 03 07 07 17 17 55 55 ae ba fa ea ea ea a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6100: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6120: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6140: ff ff ff ff ff ff ff ff aa aa aa ff ff ff ff f5 aa aa aa ff ff ff ff 55 aa aa aa ff ff ff ff 55 
+6160: aa aa aa ff ff ff ff 55 aa aa aa ff ff ff ff 55 aa aa aa ff ff ff ff 55 ff ff ff ab ab ab ab 6b 
+6180: 5a 5a 5a 5a 5a 5a 5a 5a 57 57 df fd bd ad ab aa aa a9 fd fd fd fd fd aa a5 95 fe fe fe fe bf a5 
+61a0: 55 55 ae ee ee ae ff 55 aa aa df df df d5 ff aa ff ff 55 55 55 55 55 ff dd 77 66 66 66 66 66 dd 
+61c0: aa aa ff 7f ff 7f ff aa ff ff 55 55 55 55 55 ff ff ff 55 55 55 55 55 ff ff ff 55 55 55 55 55 ff 
+61e0: a9 a9 fd fd fd fd fd a9 65 65 af ef af ef af 65 ff ff 55 55 55 55 55 ff ff ff 55 55 55 55 55 ff 
+6200: ff ff 55 55 55 55 55 ff a9 aa ff f7 ff f7 ff a9 df 77 66 66 66 66 66 df a5 a9 ff ff ff ff fd a5 
+6220: aa 6a 7f 7f 7f 7f 7f aa d5 d5 f7 7f 7e 7a ea aa a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6240: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6260: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6280: ff ff ff ff ff ff ff ff f5 f5 f5 f5 f5 f5 f5 f5 55 7f 75 75 77 77 77 7f 55 57 5f 77 7f 77 77 77 
+62a0: 55 7f 77 77 77 77 75 75 55 f7 77 77 77 77 77 77 55 d5 55 55 d5 55 55 d5 bd bd bd bd bd bd bd bd 
+62c0: 5a 5a 5a 5a 5a 5a 5a 5a ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ec ff ff ff ff ff ff ff 
+62e0: 00 00 c0 c0 f0 f0 fc fc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 00 00 00 00 
+6300: c0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6320: 03 00 00 00 00 00 00 00 30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6340: 00 00 00 00 00 00 00 00 0f 00 00 00 00 00 00 00 80 00 03 03 0f 0f 3f 3f 5d 55 55 55 55 55 55 55 
+6360: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff a5 a5 a5 a5 a5 a5 a5 a5 55 55 57 5f 7f 7f f5 f5 
+6380: 55 55 aa aa aa aa 66 66 55 55 aa aa aa aa 6a 6a 55 55 aa aa aa aa 95 95 55 55 aa aa aa aa 95 95 
+63a0: 55 55 aa aa aa aa 96 96 55 55 aa aa aa aa 66 66 55 55 f5 fd ff ff 57 57 55 55 55 55 55 55 d5 d5 
+63c0: ff ff ff ff ff ff ff ff f5 f5 f5 f5 f5 f5 f5 f5 ff ff ff ff ff ff ff ff 55 55 57 57 55 57 57 55 
+63e0: 55 f5 5d 75 d5 7d 75 dd ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff bd bd bd bd bd bd bd bd 
+6400: 5a 5a 5a 5a 5a 5a 5a 5a 55 55 55 55 fd ff ff ff 55 55 55 55 55 f5 ff ff 55 55 55 55 55 55 d5 f5 
+6420: ff ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 
+6440: ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 
+6460: ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 
+6480: ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+64a0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff a5 a5 a5 a5 a5 a5 a5 a5 a6 a6 a6 a6 a6 a6 a5 a5 
+64c0: 66 66 66 66 66 66 66 66 6a 6a 6a 6a 6a 6a 56 56 99 99 95 95 9a 9a 9a 9a dd dd d5 d5 dd dd dd dd 
+64e0: 96 96 96 99 99 99 99 99 66 66 66 66 66 66 66 66 6a 6a 6a 6a 6a 6a 56 56 d5 d5 d5 d5 d5 d5 d5 d5 
+6500: ff ff ff ff ff ff ff ff fa f9 f9 f9 f9 f9 f9 f9 55 57 57 77 77 77 77 ff 55 57 5f 77 77 7f 77 77 
+6520: 55 7f 5d 5d 5d 5d 5d 5d 55 7f 75 75 75 75 75 7f 55 77 77 77 7f 77 77 77 bd bd bd bd bd bd bd bd 
+6540: 5a 5a 5a 5a 5a 5a 5a 5a 57 55 fd 57 55 fd 57 57 ff 5f 55 f5 5f 55 f5 7f f5 f5 75 75 75 f5 75 75 
+6560: ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 0f 0f 0c 0c 0c 0c 0c 0c ff ff 00 a8 a0 a0 80 00 
+6580: ff ff 00 00 00 00 00 00 f0 f0 30 30 30 30 30 30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+65a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+65c0: 00 00 30 0f 03 03 03 03 00 c0 c0 f0 f0 fc f0 f0 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+65e0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff a5 a5 a5 a5 a5 a5 a5 a5 7f 7f 5f 57 55 55 55 55 
+6600: aa aa aa aa 55 55 55 55 aa aa aa aa 55 55 55 55 aa aa aa aa 55 55 55 55 aa aa aa aa 55 55 55 55 
+6620: aa aa aa aa 55 55 55 55 aa aa aa aa 55 55 55 55 ff ff fd f5 55 55 55 55 ff ff ff ff ff ff ff ff 
+6640: ff ff ff ff ff ff ff ff f5 f5 ff ff ff ff aa aa aa aa ff ff ff ff 55 55 aa aa ff ff ff ff 55 55 
+6660: aa aa ff ff ff ff 55 55 aa aa ff ff ff ff 55 55 aa aa ff ff ff ff 55 55 7e 7e fe fe fe fe aa aa 
+6680: 5a 5a 5a 5a 5a 5a 5a 5a af fa ff af fa ff 5f 55 ff bf ea ff af fa ff 5f f5 75 75 f5 75 75 f5 55 
+66a0: ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 0c 0c 0c 0c 0c 0c 0c 0c 00 00 00 00 00 00 00 00 
+66c0: 00 00 00 00 03 0f 0f 3f 30 30 30 30 30 30 30 30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+66e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6700: 3f 3f 00 00 00 00 00 00 fc fc 00 00 00 00 00 00 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6720: 55 55 55 55 55 55 57 57 ff ff ff ff ff fa aa a0 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6740: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6760: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6780: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+67a0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+67c0: 5a 5a 5a 5a 5a 5a 5a 5a 0f 00 00 00 00 00 00 00 ff 0f 00 00 00 00 00 00 5f 5f 5f 5f 5f 5f 5f 5f 
+67e0: ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 0c 0f 0f 00 00 00 00 00 00 ff ff 00 00 00 00 00 
+6800: 00 ff ff 00 00 00 00 00 30 f0 f0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6820: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6840: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 55 55 5a aa aa aa a5 95 a9 fd fd fd fd ad ad ad 
+6860: fc fc c0 c0 c0 c0 c0 c0 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6880: ff ff ff bb ab ab bb bb ff ff ff ae ff bf ff af ff ff ff ae bf be bf be ff ff ff be fb fa ff ba 
+68a0: ff ff ff ba ff bb bf fa ff ff ff ee ee ee ea fb ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+68c0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+68e0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6900: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 5f 5f 5f 5f 5f 5f 5f 5f 
+6920: ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6940: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6960: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6980: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 d5 d5 d5 d5 d5 d5 d5 df ad ad ad ad ad ad fd fd 
+69a0: c0 c0 c0 c0 c0 c0 c0 c0 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+69c0: ff ff ff ff ff ff ff ff ff ff ff ab fb ab bf ab ff ff ff ab bb bb bb ab ff ff ff ab fb ab bf ab 
+69e0: ff ff ff ab bf ab bb ab ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6a00: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6a20: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6a40: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 5f 5f 5f 5f 5f 5f 5f 5f 
+6a60: ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6aa0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6ac0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ff ff ff ff ff ff ff ff a9 a9 a9 a9 a9 a9 a9 a9 
+6ae0: c0 c0 c0 c0 c0 c0 c0 c0 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6b00: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6b20: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6b40: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6b60: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6b80: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 5f 5f 5f 5f 5f 5f 5f 5f 
+6ba0: 55 55 55 55 55 54 50 40 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 aa 00 00 00 
+6bc0: 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 
+6be0: 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 
+6c00: 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 aa aa aa aa aa aa 2a 0a a9 a9 a9 a9 a9 a9 a9 a9 
+6c20: c0 c0 c0 c0 c0 c0 c0 c0 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6c40: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6c60: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6c80: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6ca0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6cc0: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 fa f8 f0 00 00 00 00 00 
+6ce0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6d00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6d20: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+6d40: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 00 00 00 00 fe fe 3e 00 00 00 00 00 
+6d60: c0 c0 c0 00 00 00 00 00 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6d80: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6da0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6dc0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6de0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6e00: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 03 0f 3f 00 00 00 00 ff ff ff ff 00 00 00 00 fe fe ff ff 
+6e20: 00 00 3f ff ff ff aa aa 00 00 00 40 5a 5a aa aa 00 00 00 00 f0 fc ff ff 00 00 00 00 00 00 00 c0 
+6e40: 00 00 00 00 00 00 00 0f 00 00 00 c0 aa aa aa 55 00 00 00 c0 4c 7c 40 aa 00 00 00 00 00 00 00 ff 
+6e60: 00 0c 3f 3f 03 03 03 aa 00 c0 f0 f0 00 00 00 aa 00 00 00 00 0c aa 0a 55 00 00 00 00 30 aa aa 55 
+6e80: 00 00 00 00 00 ff ff aa 00 00 00 00 30 ff c0 aa 00 00 00 00 00 80 00 ff 00 00 00 00 00 00 00 ff 
+6ea0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+6ec0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6ee0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6f00: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6f20: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+6f40: 5a 5a 5a 5a 5a 5a 5a 5a 28 00 00 00 00 00 55 55 77 33 33 33 33 33 aa aa 88 00 00 00 00 00 55 55 
+6f60: 88 00 00 00 00 00 55 55 46 02 02 02 02 02 ff ff 64 20 20 20 20 20 ff ff 80 00 00 00 00 00 55 55 
+6f80: 07 07 05 07 07 05 aa aa fe fe aa ef ef aa 55 55 ff ff aa fb fb aa 55 55 ef ef aa ff ff aa 55 55 
+6fa0: fe fe aa bf bf aa 55 55 ff ff aa fb fb aa 55 55 ef ef aa ff ff aa 55 55 fe fe aa bf bf aa 55 55 
+6fc0: ff ff aa fb fb aa 55 55 ef ef aa ff ff aa 55 55 fe fe aa bf bf aa 55 55 fe fe aa fe fe aa 55 55 
+6fe0: 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+7000: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7020: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7040: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7060: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7080: 5a 5a 5a 5a 5a 5a 5a 5a ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 
+70a0: ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 
+70c0: ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 55 5a 65 65 66 66 ff 00 55 59 66 66 6a 66 
+70e0: aa 00 ff f5 df df d7 fd ff 00 80 80 80 80 80 80 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 
+7100: ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 
+7120: ff 00 00 00 00 00 00 00 ff 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+7140: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff fa ea ea ea ea ea fa ff af ab ab ab ab ab af 
+7160: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7180: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+71a0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+71c0: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+71e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+7200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ee fb ff 03 03 03 03 03 ee ee ff 00 00 00 00 00 
+7220: fe eb ff 30 30 30 30 30 c0 c0 c0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+7240: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+7260: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+7280: ff fe fb fb fb fe ff ff ff be fb ba bb fb ff ff ff fb ba ba bb bb ff ff ff be bb ba bb be ff ff 
+72a0: ff bf fe fe fe be ff ff ff bf ef af ef ef ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+72c0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+72e0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7300: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+7320: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 aa aa ff ff 3f 3f 0f 0f 
+7340: ff ff 55 55 5f 5f 5f 5f ff ff aa aa ff ff ff 00 ff ff aa aa ff ff ff 00 ff ff aa aa ff ff ff 3f 
+7360: ff ff aa aa ff ff ff f0 ff ff aa aa ff ff ff 03 ff ff 55 55 f5 f5 f5 f5 aa aa ff ff fc fc f0 f0 
+7380: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+73a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+73c0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff fa ea ea ea ea ea fa ff af ab ab ab ab ab af 
+73e0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7400: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7420: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7440: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 50 55 55 55 50 50 00 00 00 00 f0 ff ff 0f 00 00 00 00 00 00 f0 ff 
+7460: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+7480: 0f 0f 0f 0f 0f 0f 0f 0f 3f 3c 30 00 00 00 00 aa 00 00 03 03 0f 3f 00 aa 15 15 15 15 15 15 15 55 
+74a0: 50 53 53 53 50 50 50 50 03 03 03 03 03 03 03 03 f0 f0 f0 f0 f0 f0 f0 f0 00 00 00 00 00 00 00 00 
+74c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0f ff 
+74e0: 00 00 00 00 0f ff ff fc 00 00 0f af af af af 2f a5 a5 a5 a5 a5 a5 a5 a5 ff ff ff ff ff ff ff ff 
+7500: ff fe fb fb fb fe ff ff ff be fb ba bb fb ff ff ff fb ba ba bb bb ff ff ff be bb ba bb be ff ff 
+7520: ff be fe fe fe be ff ff ff bf ef af ef bf ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7540: 55 55 55 55 55 55 5f 5f 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 
+7560: 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 
+7580: 5a 5a 5a 5a 5a 5a 5a 5a 50 53 53 53 50 50 50 55 00 f0 c0 00 00 00 00 a0 ff 0f 00 00 00 02 02 0a 
+75a0: 50 55 55 15 15 15 15 15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ff ff 
+75c0: 0f 0f 0f 0f 0f 0f aa aa 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 
+75e0: f0 f0 f0 f0 f0 f0 aa aa 01 01 31 31 31 01 aa aa f0 f0 f0 f0 f0 f0 aa aa 00 00 00 00 00 00 ff ff 
+7600: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0f 3f 3f 3c 30 30 30 30 ff fc f0 30 30 30 30 32 
+7620: 80 0f 03 03 00 00 00 00 2f 2f 2f 2f 2f 2f 2f 2f a5 a5 a5 a5 a5 a5 a5 a5 55 55 55 55 55 55 7f 7f 
+7640: 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 
+7660: 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 ff ff 55 55 55 55 55 55 fd fd ff ff ff ff ff ff ff ff 
+7680: f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+76a0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 57 57 57 57 57 57 57 57 
+76c0: 5a 5a 5a 5a 5a 5a 5a 5a 55 55 55 50 50 53 53 53 ff ff ff 00 00 a0 80 00 00 fc ff ff 0f 00 00 00 
+76e0: 15 15 55 55 55 15 15 15 00 00 c0 f0 fc fc cc cc 00 00 00 00 00 00 00 00 55 55 15 15 05 05 00 00 
+7700: ff ff fa fa fa fa 0a 0a aa aa ff ff ff 00 00 00 aa aa ff ff ff 00 00 00 aa aa ff ff ff 30 30 30 
+7720: aa aa ff ff ff 00 00 00 aa aa ff ff ff 03 03 03 ff ff af af af af a0 a0 55 55 54 54 50 50 00 00 
+7740: 00 00 00 00 00 00 00 00 00 03 03 0f 0f 0c 0f 0f b0 b0 b0 b0 30 bf bf bf 13 13 10 10 55 55 55 55 
+7760: 00 c0 01 15 55 55 55 40 2f 2f af af af af af 2f a5 a5 a5 a5 a5 a5 a5 a5 6f 6f 6f 6f 6f 6f 6f 6f 
+7780: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+77a0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff 
+77c0: f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 55 55 55 55 55 57 57 5f 
+77e0: 55 55 55 69 aa aa aa aa 55 55 55 55 55 d5 d5 f5 ff ff ff ff ff ff ff ff 57 57 57 57 57 57 57 57 
+7800: 5a 5a 5a 5a 5a 5a 5a 5a f0 f0 f0 f0 f0 f0 f0 f0 00 00 00 00 00 00 00 00 00 00 00 00 00 03 03 0f 
+7820: 15 15 15 15 15 15 15 15 cc cc cc cc cc cc cc cc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+7840: 0f 0f 0f 0f 0f 0f 0f 0f 3f 3c 30 00 00 00 00 00 00 00 00 00 00 00 00 03 32 32 32 30 30 30 30 30 
+7860: f0 c0 00 00 00 00 00 00 03 03 03 03 03 03 23 23 f0 f0 f0 f0 f0 f0 f0 f0 00 00 00 00 00 00 00 00 
+7880: 00 00 00 00 00 00 00 00 0f 0c 0f 0f 0f 0c 0f 0f 3f bf bf bf 3f bf bf bf 50 50 53 53 53 50 50 50 
+78a0: 00 00 c0 00 00 00 00 03 2f 2f 2f 2f 2f 2f 2f 2f a5 a5 a5 a5 a5 a5 a5 a5 6f 6f 6f 6f 6f 6f 6f 6f 
+78c0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 55 55 55 57 5f 7f 7f ff 55 55 55 d5 f5 fd fd ff 
+78e0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff 
+7900: f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff af bf bf bf bf bf bf 9f 
+7920: ff ff ff ff ff ff ff ff fa fe fe fe fe fe fe f6 ff ff ff ff ff ff ff ff 57 57 57 57 57 57 57 57 
+7940: 5a 5a 5a 5a 5a 5a 5a 5a 50 50 50 55 55 55 55 55 00 00 00 ff ff ff ff 00 3f 00 55 55 55 55 00 00 
+7960: 15 15 55 55 55 55 15 15 cc cc cc c5 c5 c5 55 55 00 00 00 ff ff aa bf bf 00 00 00 ff ff aa ff ff 
+7980: 0f 0f 0f ff ff aa fb fb 00 00 00 ff ff aa ff ff 05 15 00 aa aa ff aa aa 30 30 30 ff ff aa ef ef 
+79a0: 00 03 00 aa aa 55 aa aa 53 53 03 ff ff aa ff ff f0 f0 f0 ff ff aa ef ef 00 00 00 ff ff aa ff ff 
+79c0: 00 00 00 ff ff aa fe fe 05 05 05 f5 d5 d5 d5 d5 bf bf bf bf bf bf b0 b0 50 50 50 55 55 55 05 00 
+79e0: 03 03 0f 40 55 55 55 05 2f 2f 2f 2f af af af af a5 a5 a5 a5 a5 a5 a5 a5 6f 6f 6f 6f 6f 6f 6f 6f 
+7a00: ff ff ff ff ff ff ff ff ff fe fe fe fe fe fe fd ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+7a20: ff bf bf bf bf bf bf 7f ff ff ff ff ff ff ff ff f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff 
+7a40: f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff fa f6 fe fd ff ff ff ff 
+7a60: ff ff ff ff 7d 96 aa aa af 9f bf 7f ff ff ff ff ff ff ff ff ff ff ff ff 57 57 57 57 57 57 57 57 
+7a80: 5a 5a 5a 5a 5a 5a 5a 5a 50 50 53 53 53 50 50 50 00 00 f0 c0 00 00 00 00 00 00 00 00 00 00 00 00 
+7aa0: 15 15 15 15 15 15 15 15 55 55 55 55 c0 c0 c0 c0 aa aa 55 55 30 30 30 30 aa aa ff 55 00 00 00 00 
+7ac0: aa aa f5 f5 05 05 05 05 aa aa ff 00 15 14 10 00 ff ff aa 00 00 00 00 00 55 55 aa 20 23 23 23 20 
+7ae0: aa aa 55 00 f0 c0 00 00 ff ff aa 00 00 00 00 00 aa aa 5f 5f 53 53 53 50 aa aa ff ff f0 c0 00 00 
+7b00: aa aa 55 ff 01 01 01 01 bf bf bf ff 00 00 00 00 e0 e0 e0 e0 e0 e0 e0 e0 00 fc f0 c0 c0 00 00 00 
+7b20: 00 00 00 00 00 00 00 00 2f 2f 2f 2f 2f 2f 2f 2f a5 a5 a5 a5 a5 a5 a5 a5 6f 6f 6f 6f 6f 6f 6f 6f 
+7b40: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff aa 6a ea da f6 fd ff ff aa a9 ab a7 9f 7f ff ff 
+7b60: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff 
+7b80: f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff fe fd ff ff ff ff eb ab ab ab 6b d7 55 d5 d5 d5 d5 d5 d5 fd 
+7ba0: ff ab 97 bf af 9f bf ab ff ab 97 bf af 9f bf bf ff ab 67 ef ef ef ef ef 57 57 57 57 57 57 57 57 
+7bc0: 5a 5a 5a 5a 5a 5a 5a 5a f0 f0 f0 f0 f0 f0 f0 f0 00 00 00 00 00 00 00 00 00 03 03 0f 3c 00 02 2a 
+7be0: 15 15 15 15 15 15 55 55 c0 c0 c0 c0 c0 c0 c0 c0 30 30 30 30 30 30 30 3f 03 0f 0f 3c 30 30 30 f3 
+7c00: ff ff ff 00 00 00 00 ff c0 f0 f0 3c 0c 0c 0c cf 00 00 00 00 00 00 00 00 2a 2a 20 20 20 20 21 24 
+7c20: aa aa 02 02 02 42 12 06 00 00 03 03 03 03 03 03 aa aa aa 00 00 00 14 14 aa aa aa 00 00 00 05 05 
+7c40: 81 81 a1 21 21 21 21 21 00 00 00 00 00 00 00 00 b0 b0 b0 b0 b0 b0 bf bf 00 00 00 00 00 00 00 f0 
+7c60: 00 00 00 00 03 03 0f 3f 2f 2f 2f 2f 2f 2f 2f 2f a5 a5 a5 a5 a5 a5 a5 a5 6f 6f 6f 6f 6f 6f 6f 6f 
+7c80: aa bf b7 bb bf be b7 bb 55 77 77 77 77 77 77 77 ff ae 5e fe ee ee ee ae ff ee ed ef af 6f ef ef 
+7ca0: ff af 9e be be be be bd ff ff bf af ab a7 9f 7f f9 f9 f9 f9 f9 f9 f9 f9 ff ff ff ff ff ff ff ff 
+7cc0: f9 f9 f9 f9 f9 f9 f9 fa 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 ff 57 ff ff ff ff ff ff aa 
+7ce0: 57 ff ff ff ff ff ff aa 7f ff ff ff ff ff ff aa df ff ff ff ff ff ff aa 57 57 57 57 57 57 57 ff 
+7d00: 5a 5a 5a 5a 5a 5a 5a 5a 50 50 50 55 55 55 50 00 03 0f ff ff f0 00 00 00 ff ff f0 00 00 00 00 00 
+7d20: f0 00 00 00 00 00 00 00 c0 c0 c0 c3 c3 cc cc f0 30 c0 c0 00 00 00 00 00 55 55 55 55 55 45 55 45 
+7d40: ff ff ff ff ff ff ff ff 55 55 55 55 55 51 55 51 00 00 00 00 00 00 00 00 30 32 30 32 3a 3f 3f 3f 
+7d60: 03 03 83 a3 ab ff ff ff 03 03 03 03 03 03 03 03 3c 55 55 55 57 57 5f 4f 0f 55 55 d5 f5 f5 fd fc 
+7d80: 3a f0 f0 f0 f0 f0 f0 f0 00 c0 c0 30 30 0c 0c 03 ca c0 c0 c0 c0 c0 c0 c0 ff ff 0f 00 00 00 00 00 
+7da0: 00 f0 f0 ff 0f 00 00 00 2f 2f 2f af af af 0f 00 a5 a5 a5 a5 a5 a5 a5 a5 6f 6f 6f 6f 6f 6f 6f 6a 
+7dc0: dd ff ff ff ff ff ff aa dd ff ff ff ff ff ff aa 5d ff ff ff ff ff ff aa df ff ff ff ff ff ff aa 
+7de0: 7f ff ff ff ff ff ff aa 55 55 55 55 55 55 55 ff f9 f9 f9 f9 f9 f9 f9 a9 ff ff ff ff ff ff ff ff 
+7e00: 5f 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 
+7e20: ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 
+7e40: 5a 5a 5a 5a 5a 5a 5a 5a 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 
+7e60: 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 cf ff 0a 0a 0a 0a 55 55 
+7e80: aa 82 00 00 00 00 55 55 f3 ff a0 a0 a0 a0 55 55 00 00 00 00 00 00 55 55 3f 3f 3f 3f 55 55 aa aa 
+7ea0: ff ff ff ff 55 55 aa aa 01 01 00 00 c0 c0 aa aa 4f 7f f0 f0 f0 f0 aa aa fc ff 03 03 03 03 55 55 
+7ec0: 50 50 80 80 80 80 ff ff 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 
+7ee0: 00 00 00 00 00 00 55 55 00 00 00 00 00 00 55 55 a5 a5 a5 a5 a5 a5 a5 a5 7f 55 55 55 55 55 55 55 
+7f00: ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 
+7f20: ff 55 55 55 55 55 55 55 ff 55 55 55 55 55 55 55 fd 55 55 55 55 55 55 55 ff ff ff ff ff ff ff ff 
+7f40: 0f 0f 0f 0f 0f 0f 0f 0f f0 0c e0 0b 06 06 06 0b 0b 06 06 06 0b 0b 06 06 06 0b 0b 0b e0 0c f0 0f 
+7f60: 0f 0f 0f 0f 0f 0f 0f 0f 0f 8f 8f 8f 8f 8f 8f 8b f0 fe bc cb cb bc fc bf bc fc fc fc bc cb fc fc 
+7f80: fc bc bf bc bc fe f0 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 8b 80 80 80 80 80 f8 f0 0e 0e 3b 3e 03 03 3b 
+7fa0: 3b 03 03 03 3b 3b 03 03 03 3b bb eb 0e 0e f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 0f 8b 08 80 80 08 08 f8 
+7fc0: f0 e0 e0 e0 0e 3e 3e 3e 3e 3e 3e 3e 3e 3e 3e 3e 3e 3e 0e 0e 0e 0e f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 
+7fe0: 0f 08 80 80 80 80 80 f8 f0 e0 e0 e0 0e 03 3e ff 3e 3e 03 03 03 03 03 03 3b 3b 0e 0e 0e 0e f0 f0 
+8000: f0 f0 f0 f0 f0 f0 f0 00 0f 8f f8 f8 f8 f8 f8 8f f0 60 60 e0 0e 03 3e 03 3f 3e 03 03 03 03 03 03 
+8020: 36 36 0e 0e e6 36 f0 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f f0 36 36 6e 0e 03 3e 3e 
+8040: 3e 3e 03 03 03 03 03 03 03 03 e0 6e 36 03 f0 0f 00 00 00 00 00 00 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+8060: f0 03 03 6e 0e 03 03 03 03 03 03 03 03 03 03 03 03 03 e0 6e 36 03 f0 0f 0f 00 00 00 00 0f 0f 0f 
+8080: 0f 0f 0f 0f 0f 0f 0f 0f f0 03 03 6e 0e 03 03 03 03 03 03 03 03 03 03 03 03 03 00 60 36 03 f0 0f 
+80a0: 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f f0 03 03 6e e3 3e 3e 1e 3e 3e 3e 3e 3e 3e 3e 3e 
+80c0: 3e 3e 30 60 36 03 f0 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 00 00 0f 0f 0f 0f f0 03 03 ee 03 03 03 03 
+80e0: 03 03 03 03 03 03 03 03 03 03 30 66 36 03 f0 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 00 00 00 00 00 00 
+8100: f0 32 33 3b 22 b2 32 32 39 9b b9 39 99 99 9b 9b 99 99 00 39 03 03 f0 0f 0f 00 00 00 00 0f 0f 0f 
+8120: 0f 00 00 00 00 00 00 00 f0 02 20 02 02 2c 2c 02 90 09 09 09 09 09 09 09 09 09 09 09 06 06 f0 00 
+8140: 00 00 00 00 00 00 00 0f 0f 0f 0f 0f 0f 0f 0f 0f f0 3c 3c 3c 3c 3c 3c 3c 3c 3c 87 87 7c 88 3c 3c 
+8160: 3c 3c 3c 3c 3c 3c f0 0f 00 00 00 00 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f f0 03 03 03 03 03 03 03 
+8180: 03 03 77 77 77 38 03 03 03 03 03 03 03 03 f0 00 00 00 00 00 00 00 00 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+81a0: f0 03 03 03 03 03 03 3e be 3b 3b 3b 3b 3b be 3e 03 03 03 03 03 03 f0 0f 00 00 00 00 00 00 0f 0f 
+81c0: 0f 0f 0f 0f 0f 0f 0f 0f f0 e3 3e 3e 03 03 03 03 3e ee ee e3 ef 3e 3e 03 03 03 03 3e 3e ee f0 0f 
+81e0: 00 00 00 00 00 00 0f 0f fb fb fb fb fb fb fb fb f0 ef ee ff e3 03 03 36 66 e6 e6 e6 66 e6 66 36 
+8200: 03 03 3e ff ee ee f0 fb fb fb fb fb fb fb fb 0f 8b 08 08 08 08 08 08 8b f0 ef ff 3e e3 3c 03 b3 
+8220: 3e bb bb bb bb bb 3e b3 03 3b bb ef ef 3e f0 fb 08 08 08 08 08 08 fb 0f 8b 08 08 80 80 80 08 8b 
+8240: f0 3e 03 3f e3 3c 03 03 3e 3f 3f ff 3f ff 3e 03 03 3b 3b ef 3f ee f0 fb 08 08 80 80 08 08 fb 0f 
+8260: 8b 08 08 c8 00 c8 08 8b f0 e3 3e ef e3 bc 66 66 36 66 fe 66 6e f6 36 66 66 bc 3b e3 ef 3e f0 fb 
+8280: 08 c0 00 00 c0 08 fb 0f 8b 08 08 c0 c8 c0 08 8b f0 ef 3f 03 e3 bc b6 b6 e6 c6 ee 6e e6 ee e6 66 
+82a0: c6 cc ee 3f 03 ee f0 fb 08 08 c0 c0 08 08 fb 0f 8b c0 c0 80 c0 c0 c0 8b f0 3e 03 ee e3 3c 3c 36 
+82c0: 36 36 03 02 02 32 b2 b2 c2 03 cc 3e 3f ee f0 fb c8 80 c0 c0 c0 c0 fb 0f 8b 8b 8b cb cb cb cb 8b 
+82e0: f0 e3 3e 3e 3e 3c 3c 63 06 63 03 00 00 32 2b 2b cc 3c ee 3e 3e ee f0 fb cb cb cb cb cb 8b fb 0f 
+8300: fb fb fb fb fb fb fb fb f0 06 06 06 06 06 06 0b 06 0b 06 b0 b0 20 20 06 2b 06 06 06 06 06 f0 fb 
+8320: fb fb fb fb fb fb fb 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0b 0c 06 06 06 06 06 06 06 06 06 06 06 06 06 
+8340: 06 06 06 06 0c 0b 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0b 0b 0b 0b 0b 0b 0f 0f 0b 0f 0f 0f 0f 0c 0c 
+8360: 0f 0c 0c 0c 0f 0f 0c 0c 0c 0f 0c 0f 0f 0b 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0b 00 00 00 00 00 0b 
+8380: 0f 0e 0e 0e 0e 03 03 0b 0b 03 03 03 0b 0b 03 03 03 0b 0e 0b 0e 0e 0f 00 0f 0f 0f 0f 0f 0f 00 00 
+83a0: 0f 0b 08 00 00 08 08 0b 0f 00 00 00 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 0f 0f 
+83c0: 0f 0f 0f 00 0f 0f 0f 00 0f 0b 00 00 00 00 00 0b 0f 00 00 00 0e 03 0e 0e 0e 0e 03 03 03 03 03 03 
+83e0: 0b 0b 0e 0e 0e 0e 0f 00 0f 0f 0f 0f 0f 0f 00 0f 0f 0b 0b 0b 0b 0b 0b 0b 0f 0e 0e 00 0e 03 0e 03 
+8400: 0f 0e 03 03 03 03 03 03 06 06 0e 0e 06 0e 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+8420: 0f 06 06 0e 0e 03 0e 0e 0e 0e 03 03 03 03 03 03 03 03 0e 00 06 03 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+8440: 0f 0f 0f 0f 0f 0f 0f 0f 0f 03 03 0e 0e 03 03 03 03 03 03 03 03 03 03 03 03 03 00 00 06 03 0f 0f 
+8460: 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 03 03 0e 0e 03 03 03 03 03 03 03 03 03 03 03 
+8480: 03 03 00 06 06 03 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 03 03 0e 03 0e 0e 0e 
+84a0: 0e 0e 0e 0e 0e 0e 0e 0e 0e 0e 03 06 06 03 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+84c0: 0f 03 03 06 03 03 03 03 03 03 03 03 03 03 03 03 03 03 00 00 06 03 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+84e0: 0f 0f 0f 0f 0f 0f 0f 0f 0f 02 02 02 0b 02 02 02 09 00 00 09 00 00 00 00 0b 00 09 09 03 03 0f 0f 
+8500: 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 06 0c 06 06 00 00 06 08 08 08 08 08 08 08 08 
+8520: 08 08 08 08 06 06 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0c 0c 0c 0c 0c 0c 0c 
+8540: 0c 0c 0c 0c 08 0c 0c 0c 0c 0c 0c 0c 0c 0c 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+8560: 0f 03 03 03 03 03 03 03 03 03 08 08 08 08 03 03 03 03 03 03 03 03 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 
+8580: 0f 0f 0f 0f 0f 0f 0f 0f 0f 03 03 03 03 03 03 0b 0e 0e 0e 0e 0e 0e 0e 0b 03 03 03 03 03 03 0f 0f 
+85a0: 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 03 0e 0e 03 03 03 03 0e 0f 0f 03 0f 0e 0e 03 
+85c0: 03 03 03 0e 0e 06 0f 0f 0f 0f 0f 0f 0f 0f 0f 0f 0b 0b 0b 0b 0b 0b 0b 0b 0f 0f 0f 0e 03 03 03 06 
+85e0: 0e 06 06 06 0e 0f 0e 06 03 03 0e 0e 0f 06 0f 0b 0b 0b 0b 0b 0b 0b 0b 0f 0f 08 08 08 08 08 08 0b 
+8600: 0f 0f 0e 0e 03 0c 03 03 0b 0e 0e 0e 0e 0e 0b 03 03 0b 0e 0f 0f 06 0f 08 08 08 08 08 08 08 08 0f 
+8620: 0f 08 08 00 08 00 08 0b 0f 0e 03 0f 03 0c 03 03 0e 0f 0f 0e 0f 0e 0e 03 03 0b 0e 0f 0f 06 0f 08 
+8640: 08 08 00 00 08 08 08 0f 0f 08 08 00 00 00 08 0b 0f 03 0e 0f 03 0c 0e 0e 0e 0e 06 0e 0f 0e 0e 0e 
+8660: 0e 0c 0e 03 0f 06 0f 08 08 08 00 00 08 08 08 0f 0f 08 08 08 00 08 08 0b 0f 0f 0f 03 03 0c 0c 0c 
+8680: 0b 0e 06 0c 0c 06 0c 0c 0b 0b 0c 0f 03 06 0f 08 08 08 08 08 08 08 08 0f 0f 08 08 00 08 08 08 0b 
+86a0: 0f 0e 03 0f 03 0c 0c 06 06 06 03 02 02 02 02 02 02 03 0e 0e 0f 06 0f 08 00 00 08 08 08 08 08 0f 
+86c0: 0f 0b 0b 08 08 08 08 0b 0f 03 0e 0e 0e 0c 0c 03 06 03 03 02 02 02 0b 0b 02 0c 0c 0e 0e 06 0f 08 
+86e0: 08 08 08 08 08 0b 08 0f 0b 0b 0b 0b 0b 0b 0b 0b 0f 06 06 06 06 06 06 06 06 06 06 02 02 0b 0b 0b 
+8700: 00 06 06 06 06 06 0f 0b 0b 0b 0b 0b 0b 0b 0b 0f 03                                              
+
+[Map Data]
+8800: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -         .import binary ".\assets\op_intro screen - Map (8bpc, 40x25)_alt.bin"
+8820: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ff b1 b2 
+8840: b3 b4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 b5 b6 
+8860: b7 b7 b8 b9 ba bb bc bd b7 be 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8880: 00 00 00 00 00 00 bf c0 c1 c1 c2 c3 c4 c5 c6 b7 b7 c7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+88a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c8 c9 ca ca cb cc cd ce cf b7 b7 d0 00 00 00 00 00 00 
+88c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 4a 4b 4c 00 d1 d2 d3 d3 d4 d5 d6 d7 d8 b7 
+88e0: b7 d9 00 00 4d 4e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 4f 50 51 52 da db 
+8900: dc dd de df e0 e1 e2 e3 e4 3e 53 00 54 55 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8920: 00 56 57 58 59 5a 00 00 e5 e6 e7 e8 e9 b7 ea 00 00 00 5c 5d 5e 5f 00 00 00 00 00 00 00 00 00 00 
+8940: 00 00 00 00 00 00 00 00 00 00 61 62 63 64 00 00 eb ec ed ee b7 b7 ef 00 00 00 65 66 67 68 00 00 
+8960: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 69 6a 6a 41 6b 00 00 f0 b7 f1 f2 f3 b7 f4 00 
+8980: 00 00 42 6c 6a 6a 6d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 6e 6f 70 71 72 00 00 
+89a0: f5 f6 00 00 f7 f8 f9 fa 00 00 73 74 75 76 77 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+89c0: 00 78 00 00 79 7a 00 00 00 00 00 00 fb fc fd fe 00 3e 7b 44 00 7c 7d 00 00 00 00 00 00 00 00 00 
+89e0: 00 00 00 00 00 00 00 00 00 00 7e 7f 80 81 43 00 00 00 00 00 00 00 00 00 00 82 83 84 85 86 00 00 
+8a00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 87 88 45 00 00 00 00 00 00 00 00 00 00 00 
+8a20: 7c 89 8a 8b 8c 8d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 8e 8f 00 00 00 
+8a40: 00 00 90 91 92 00 93 94 95 46 96 84 47 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8a60: 00 00 00 00 97 00 00 00 00 00 98 99 9a 9b 9c 9d 9e 9f a0 a1 00 00 00 00 00 00 00 00 00 00 00 00 
+8a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a2 a3 a4 00 a5 8a a6 a7 a8 00 00 00 00 00 
+8aa0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a9 aa 00 00 00 ac 
+8ac0: 45 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8ae0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8b00: 00 06 01 0e 00 14 12 09 02 15 14 05 00 14 0f 00 0e 09 0e 14 05 0e 04 0f 00 00 00 00 00 00 00 00 
+8b20: 00 00 00 00 00 00 00 10 12 0f 07 12 01 0d 0d 09 0e 07 00 02 19 00 0d 05 14 05 13 05 16 00 32 30 
+8b40: 32 36 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8b60: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8b80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8ba0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8bc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+8be0: 00 00 00 00 00 00 00 00                                                                         
