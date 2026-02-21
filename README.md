@@ -1,5 +1,7 @@
-# oilpanic
+# Oil Panic
 Oil Panic for the Commodore 64
+
+https://metesev.itch.io/oil-panic
 
 Step into the shoes of the hardest-working Service Attendant in the 8-bit world. 
 In this faithful C64 tribute to the dual-screen LCD classics, your mission is simple: 
