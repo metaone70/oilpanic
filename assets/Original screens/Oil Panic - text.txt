@@ -1,0 +1,24 @@
+Classic version
+The game is set in a gas station where a leaky pipe is dripping oil. The Station Helper must collect these drops in a bucket and dump them into his boss's oil drum so that he may take them to the cars waiting beside the defunct gas pumps. The Station Helper also needs to be quick, as the dripping oil is right above flammable sources that cause a major fire if the droplets make contact with them (specifically, a smoking ashtray as well as two lit stoves). The bucket can hold only three drops of oil. For every drop of oil the Station Helper catches, he receives a point. He earns a point for dumping one drop of oil into the oil drum, two points for dumping two drops, and five points for dumping three drops. As the game progresses, the oil drips faster. If a drop is missed, if the bucket overflows, or if the Station Helper dumps his bucket on a customer instead of in his boss's drum, he loses one of four lives. If the player earns 300 points without any misses, another boss with an oil drum appears for 20 to 30 seconds, and any oil the Station Helper dumps into either boss's oil drum is worth double points. If the player has any misses at said score, all misses are removed instead. This game uses two miss counters: one for missed or overflowing oil, and the other for spilling the oil onto customers. If the player gets three misses from either of those categories, they receive a Game Over.
+
+The above text is from the Super Mario Wiki and is available under a Creative Commons license. Attribution must be provided through a list of authors or a link back to the original article. Source: https://www.mariowiki.com/Oil_Panic
+
+
+
+
+
+
+
+
+.text "oil panic for commodore 64. (c) 1982 nintendo. c64 port by mete sev." 
+.text "a leaky pipe is dripping oil. the station helper must collect these "
+.text "drops in a bucket and dump them into his boss's oil drum. "
+.text "the bucket can hold only three drops of oil. for every drop of oil "
+.text "the station helper catches, he receives a point. he earns a point for "
+.text "dumping one drop of oil into the oil drum, two points for dumping two "
+.text "drops, and five points for dumping three drops. if a drop is missed, "
+.text "if the bucket overflows, or if the station helper dumps his bucket on "
+.text "a customer, he loses one of four lives. there are two miss counters: "
+.text "one for missed or overflowing oil, and the other for spilling the oil 
+.text "onto customers. if the player gets three misses from either of those "
+.text "categories, the game ends."
