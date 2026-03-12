@@ -115,3 +115,5 @@ DEVELOPMENT LOG
 // Now misses will be cleared when entering the bonus stage.
 // High score is now shown on the info text screen. If resetted the game after 999
 // the high score will alway show 999.
+//v25 (22.02.2026)
+// Upon demand, joystick support added. 
